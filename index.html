@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organizador de Links</title>
+    <script src="https://kit.fontawesome.com/3846a067f2.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="estilos.css">
+</head>
+
+<body>
+
+    <div id="container"></div>
+    <button id="addBtn">+</button>
+    <input type="text" id="searchBottom" placeholder="Buscar carpeta o link...">
+    <button id="backBtn">
+        <i class="fa-solid fa-arrow-up"></i>
+        <i class="fa-solid fa-folder"></i>
+    </button>
+
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <h3 id="modalTitle">Agregar</h3>
+            <label for="itemType">Tipo:</label>
+            <select id="itemType">
+                <option value="folder">Carpeta</option>
+                <option value="link">Link</option>
+            </select>
+            <label for="itemTitle">Título:</label>
+            <input type="text" id="itemTitle" placeholder="Título">
+            <label for="itemLink">URL (solo para link):</label>
+            <input type="url" id="itemLink" placeholder="https://">
+            <label for="itemColor">Color (solo carpeta):</label>
+            <input type="color" id="itemColor" value="#FFD700">
+            <button id="saveItem">Guardar</button>
+            <button id="cancelItem">Cancelar</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
