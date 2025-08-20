@@ -1,6 +1,7 @@
 let currentFolder = null;
 let editItemId = null;
 let data = JSON.parse(localStorage.getItem("linksData")) || [];
+let folderHistory = []; // <<< Historial de navegación
 
 const container = document.getElementById("container");
 const addBtn = document.getElementById("addBtn");
@@ -101,11 +102,11 @@ items.sort((a, b) => a.title.toLowerCase().localeCompare(b.title.toLowerCase()))
     // Abrir carpeta o link con un solo clic
     div.onclick = () => {
       if (item.type === "folder") {
+        if (currentFolder !== null) folderHistory.push(currentFolder); // <<< Guardar historial
         currentFolder = item.id;
         renderItems(currentFolder);
-        backBtn.style.display = "block";
       } else {
-        window.open(item.link, "_blank");
+        window.location.href = item.link; // ✅ Ahora abre en la misma pestaña
       }
     };
 
@@ -183,9 +184,15 @@ addBtn.addEventListener("click", () => openModal());
 cancelItem.addEventListener("click", closeModal);
 saveItem.addEventListener("click", saveModal);
 searchBottom.addEventListener("input", () => renderItems(currentFolder));
+
 backBtn.addEventListener("click", () => {
-  currentFolder = null;
-  renderItems();
+  if (folderHistory.length > 0) {
+    currentFolder = folderHistory.pop(); // <<< Volver a la carpeta anterior
+    renderItems(currentFolder);
+  } else {
+    currentFolder = null;
+    renderItems();
+  }
 });
 
 modal.addEventListener("keydown", (e) => {
@@ -196,4 +203,3 @@ modal.addEventListener("keydown", (e) => {
 });
 
 renderItems();
-
