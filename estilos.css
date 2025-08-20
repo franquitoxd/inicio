@@ -6,12 +6,30 @@ body {
   color: #e0e0e0;
 }
 
+#topButtons {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 10px;
+  z-index: 5;
+}
+
+#topButtons button {
+  background: #0078d4;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
 #container {
   display: flex;
   flex-wrap: wrap;
   padding: 20px;
   gap: 15px;
-  margin-top: 20px;
+  margin-top: 60px;
 }
 
 .item {

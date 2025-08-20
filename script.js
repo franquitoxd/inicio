@@ -1,7 +1,7 @@
 let currentFolder = null;
 let editItemId = null;
 let data = JSON.parse(localStorage.getItem("linksData")) || [];
-let folderHistory = []; // <<< Historial de navegación
+let folderHistory = [];
 
 const container = document.getElementById("container");
 const addBtn = document.getElementById("addBtn");
@@ -15,6 +15,10 @@ const itemColor = document.getElementById("itemColor");
 const saveItem = document.getElementById("saveItem");
 const cancelItem = document.getElementById("cancelItem");
 const backBtn = document.getElementById("backBtn");
+
+const exportBtn = document.getElementById("exportBtn");
+const importBtn = document.getElementById("importBtn");
+const importFile = document.getElementById("importFile");
 
 function saveData() {
   localStorage.setItem("linksData", JSON.stringify(data));
@@ -32,14 +36,14 @@ function getRandomColor() {
 function renderItems(folderId = null) {
   container.innerHTML = "";
   let items = data.filter((i) => i.parent === folderId);
-const search = searchBottom.value.toLowerCase();
-if (search) {
-  items = items.filter((i) => i.title.toLowerCase().includes(search));
-}
+  const search = searchBottom.value.toLowerCase();
+  if (search)
+    items = items.filter((i) => i.title.toLowerCase().includes(search));
 
-// Ordenar alfabéticamente por título
-items.sort((a, b) => a.title.toLowerCase().localeCompare(b.title.toLowerCase()));
-
+  // Ordenar alfabéticamente
+  items.sort((a, b) =>
+    a.title.toLowerCase().localeCompare(b.title.toLowerCase())
+  );
 
   items.forEach((item) => {
     const div = document.createElement("div");
@@ -99,14 +103,13 @@ items.sort((a, b) => a.title.toLowerCase().localeCompare(b.title.toLowerCase()))
     buttonsDiv.appendChild(delBtn);
     div.appendChild(buttonsDiv);
 
-    // Abrir carpeta o link con un solo clic
     div.onclick = () => {
       if (item.type === "folder") {
-        if (currentFolder !== null) folderHistory.push(currentFolder); // <<< Guardar historial
+        if (currentFolder !== null) folderHistory.push(currentFolder);
         currentFolder = item.id;
         renderItems(currentFolder);
       } else {
-        window.location.href = item.link; // ✅ Ahora abre en la misma pestaña
+        window.location.href = item.link;
       }
     };
 
@@ -184,22 +187,53 @@ addBtn.addEventListener("click", () => openModal());
 cancelItem.addEventListener("click", closeModal);
 saveItem.addEventListener("click", saveModal);
 searchBottom.addEventListener("input", () => renderItems(currentFolder));
-
 backBtn.addEventListener("click", () => {
   if (folderHistory.length > 0) {
-    currentFolder = folderHistory.pop(); // <<< Volver a la carpeta anterior
+    currentFolder = folderHistory.pop();
     renderItems(currentFolder);
   } else {
     currentFolder = null;
     renderItems();
   }
 });
-
 modal.addEventListener("keydown", (e) => {
   if (e.key === "Enter") {
     e.preventDefault();
     saveModal();
   }
+});
+
+// ================= Exportar / Importar =================
+exportBtn.addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify(data, null, 2)], {
+    type: "application/json",
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "linksData.json";
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+importBtn.addEventListener("click", () => importFile.click());
+
+importFile.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function (event) {
+    try {
+      data = JSON.parse(event.target.result);
+      saveData();
+      renderItems();
+      alert("Datos cargados correctamente");
+    } catch (err) {
+      alert("Archivo no válido");
+    }
+  };
+  reader.readAsText(file);
+  importFile.value = ""; // Limpiar input
 });
 
 renderItems();

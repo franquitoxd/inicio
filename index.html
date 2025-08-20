@@ -1,13 +1,18 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Organizador de Links</title>
-    <script src="https://kit.fontawesome.com/3846a067f2.js" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="estilos.css">
-</head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Organizador</title>
+<script src="https://kit.fontawesome.com/3846a067f2.js" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="estilos.css">
 <body>
+    <div id="topButtons">
+        <button id="exportBtn">Exportar</button>
+        <button id="importBtn">Cargar</button>
+        <input type="file" id="importFile" accept=".json" style="display:none">
+    </div>
+
     <div id="container"></div>
     <button id="addBtn">+</button>
     <input type="text" id="searchBottom" placeholder="Buscar carpeta o link...">
@@ -34,7 +39,6 @@
             <button id="cancelItem">Cancelar</button>
         </div>
     </div>
-
-    <script src="script.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
