@@ -19,6 +19,15 @@ function saveData() {
   localStorage.setItem("linksData", JSON.stringify(data));
 }
 
+function getRandomColor() {
+  const letters = "0123456789ABCDEF";
+  let color = "#";
+  for (let i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * 16)];
+  }
+  return color;
+}
+
 function renderItems(folderId = null) {
   container.innerHTML = "";
   let items = data.filter((i) => i.parent === folderId);
@@ -31,16 +40,35 @@ function renderItems(folderId = null) {
     div.classList.add("item");
     div.dataset.id = item.id;
 
+    const iconContainer = document.createElement("div");
+    iconContainer.style.width = "100px";
+    iconContainer.style.height = "100px";
+    iconContainer.style.borderRadius = "10px";
+    iconContainer.style.overflow = "hidden";
+    iconContainer.style.display = "flex";
+    iconContainer.style.alignItems = "center";
+    iconContainer.style.justifyContent = "center";
+    iconContainer.style.background = "#2a2a2a";
+    iconContainer.style.padding = "10px";
+
     if (item.type === "folder") {
       const icon = document.createElement("i");
-      // Verificamos si la carpeta tiene elementos dentro
       const hasChildren = data.some((i) => i.parent === item.id);
       icon.className = hasChildren
         ? "fa-solid fa-folder-open"
         : "fa-solid fa-folder";
       icon.style.color = item.color || "#FFD700";
-      div.appendChild(icon);
+      iconContainer.appendChild(icon);
+    } else {
+      const img = document.createElement("img");
+      img.src = `https://www.google.com/s2/favicons?sz=128&domain_url=${item.link}`;
+      img.style.width = "80px";
+      img.style.height = "80px";
+      img.style.borderRadius = "10px";
+      iconContainer.appendChild(img);
     }
+
+    div.appendChild(iconContainer);
 
     const title = document.createElement("div");
     title.classList.add("item-title");
@@ -65,7 +93,8 @@ function renderItems(folderId = null) {
     buttonsDiv.appendChild(delBtn);
     div.appendChild(buttonsDiv);
 
-    div.ondblclick = () => {
+    // Abrir carpeta o link con un solo clic
+    div.onclick = () => {
       if (item.type === "folder") {
         currentFolder = item.id;
         renderItems(currentFolder);
@@ -98,6 +127,7 @@ function openModal(id = null) {
     itemColor.value = "#FFD700";
   }
   itemLink.style.display = itemType.value === "link" ? "block" : "none";
+  itemColor.style.display = itemType.value === "folder" ? "block" : "none";
   itemType.onchange = () => {
     itemLink.style.display = itemType.value === "link" ? "block" : "none";
     itemColor.style.display = itemType.value === "folder" ? "block" : "none";
@@ -124,7 +154,7 @@ function saveModal() {
       data.push({ id: Date.now(), type, title, link, parent: currentFolder });
     }
   } else {
-    const color = itemColor.value;
+    const color = editItemId ? itemColor.value : getRandomColor();
     if (editItemId) {
       const item = data.find((i) => i.id === editItemId);
       item.title = title;
@@ -137,6 +167,7 @@ function saveModal() {
   renderItems(currentFolder);
   closeModal();
 }
+
 function deleteItem(id) {
   data = data.filter((i) => i.id !== id && i.parent !== id);
   saveData();
@@ -152,7 +183,6 @@ backBtn.addEventListener("click", () => {
   renderItems();
 });
 
-// Ejecutar guardar al presionar Enter en cualquier input del modal
 modal.addEventListener("keydown", (e) => {
   if (e.key === "Enter") {
     e.preventDefault();
