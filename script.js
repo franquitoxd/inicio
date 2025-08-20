@@ -31,9 +31,14 @@ function getRandomColor() {
 function renderItems(folderId = null) {
   container.innerHTML = "";
   let items = data.filter((i) => i.parent === folderId);
-  const search = searchBottom.value.toLowerCase();
-  if (search)
-    items = items.filter((i) => i.title.toLowerCase().includes(search));
+const search = searchBottom.value.toLowerCase();
+if (search) {
+  items = items.filter((i) => i.title.toLowerCase().includes(search));
+}
+
+// Ordenar alfabéticamente por título
+items.sort((a, b) => a.title.toLowerCase().localeCompare(b.title.toLowerCase()));
+
 
   items.forEach((item) => {
     const div = document.createElement("div");
@@ -191,3 +196,4 @@ modal.addEventListener("keydown", (e) => {
 });
 
 renderItems();
+
