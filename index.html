@@ -1,44 +1,62 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Organizador</title>
-<script src="https://kit.fontawesome.com/3846a067f2.js" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="estilos.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Organizador Mejorado</title>
+  <script src="https://kit.fontawesome.com/3846a067f2.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="estilos.css">
+</head>
+
 <body>
-    <div id="topButtons">
-        <button id="exportBtn">Exportar</button>
-        <button id="importBtn">Cargar</button>
-        <input type="file" id="importFile" accept=".json" style="display:none">
-    </div>
 
-    <div id="container"></div>
-    <button id="addBtn">+</button>
-    <input type="text" id="searchBottom" placeholder="Buscar carpeta o link...">
-    <button id="backBtn">
-        <i class="fa-solid fa-arrow-up"></i>
-        <i class="fa-solid fa-folder"></i>
-    </button>
+  <!--reloj-->>
+  <div id="clock"></div>
 
-    <div class="modal" id="modal">
-        <div class="modal-content">
-            <h3 id="modalTitle">Agregar</h3>
-            <label for="itemType">Tipo:</label>
-            <select id="itemType">
-                <option value="folder">Carpeta</option>
-                <option value="link">Link</option>
-            </select>
-            <label for="itemTitle">Título:</label>
-            <input type="text" id="itemTitle" placeholder="Título">
-            <label for="itemLink">URL (solo para link):</label>
-            <input type="url" id="itemLink" placeholder="https://">
-            <label for="itemColor">Color (solo carpeta):</label>
-            <input type="color" id="itemColor" value="#FFD700">
-            <button id="saveItem">Guardar</button>
-            <button id="cancelItem">Cancelar</button>
-        </div>
+  <div id="overlay"></div>
+
+  <div id="sideMenu">
+
+    <h3>Menú</h3>
+    <button id="filesBtn">Archivos <i class="fa-solid fa-chevron-down"></i></button>
+    <div class="subOptions" id="filesOptions">
+      <button id="exportBtn">Exportar</button>
+      <button id="importBtn">Cargar</button>
+      <input type="file" id="importFile" accept=".json" style="display:none">
     </div>
+  </div>
+
+  <button id="menuBtn"
+    style="cursor: pointer; position:fixed;top:10px;right:10px;z-index:30;background:#0078d4;color:white;border:none;border-radius:5px;padding:5px 10px;font-size:30px;"><i
+      class="fa-solid fa-bars"></i></button>
+
+  <div id="container"></div>
+
+  <button id="addBtn">+</button>
+  <div class="add-options" id="addOptions">
+    <button id="addFolderBtn"><i class="fa-solid fa-folder"></i></button>
+    <button id="addLinkBtn"><i class="fa-solid fa-link"></i></button>
+  </div>
+
+  <input type="text" id="searchBottom" placeholder="Buscar carpeta o link...">
+  <button id="backBtn"><i class="fa-solid fa-arrow-up"></i><i class="fa-solid fa-folder"></i></button>
+
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <h3 id="modalTitle">Agregar</h3>
+      <label for="itemTitle">Título:</label>
+      <input type="text" id="itemTitle" placeholder="Título">
+      <label for="itemLink" id="linkLabel">URL</label>
+      <input type="url" id="itemLink" placeholder="https://">
+      <label for="itemColor" id="colorLabel">Color</label>
+      <input type="color" id="itemColor" value="#FFD700">
+      <label for="itemPIN" id="pinLabel">PIN (dejar vacío si no desea)</label>
+      <input type="text" id="itemPIN" placeholder="PIN">
+      <button id="saveItem">Guardar</button>
+      <button id="cancelItem">Cancelar</button>
+    </div>
+  </div>
 <script src="script.js"></script>
 </body>
 </html>
