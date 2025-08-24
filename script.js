@@ -88,7 +88,7 @@ function renderItems(folderId = null) {
       iconContainer.appendChild(icon);
     } else {
       const img = document.createElement("img");
-      img.src = "https://cdn-icons-png.flaticon.com/512/3875/3875172.png";
+      img.src = `https://www.google.com/s2/favicons?sz=128&domain_url=${item.link}`;
       img.style.width = "80px";
       img.style.height = "80px";
       img.style.borderRadius = "10px";
