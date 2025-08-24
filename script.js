@@ -148,7 +148,7 @@ function renderItems(folderId = null) {
         currentFolder = item.id;
         renderItems(currentFolder);
       } else {
-        window.open(item.link, "_blank");
+        window.location.href = item.link;
       }
     };
     container.appendChild(div);
