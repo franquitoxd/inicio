@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notas con enlaces clickeables</title>
+    <script src="https://kit.fontawesome.com/3846a067f2.js" crossorigin="anonymous"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #121212;
+            color: #e0e0e0;
+        }
+
+        #organizerBtn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 10px 15px;
+            background: #0078d4;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 50;
+            font-weight: bold;
+        }
+
+        #container {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 80px 20px 20px 20px;
+            gap: 15px;
+        }
+
+        .note-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 120px;
+            padding: 10px;
+            border: 2px solid #0078d4;
+            border-radius: 10px;
+        }
+
+        .note-icon {
+            width: 120px;
+            height: 120px;
+            background: #1e1e1e;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            position: relative;
+            margin-bottom: 5px;
+        }
+
+        .note-title {
+            text-align: center;
+            font-size: 14px;
+            word-break: break-word;
+            margin-bottom: 5px;
+        }
+
+        .note-actions {
+            display: flex;
+            gap: 5px;
+            margin-top: 5px;
+        }
+
+        .note-actions button {
+            padding: 3px 6px;
+            font-size: 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background: #0078d4;
+            color: white;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 25;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: #1e1e1e;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 600px;
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        #editor {
+            flex: 1;
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-y: auto;
+            outline: none;
+        }
+
+        #addLinkModal {
+            display: none;
+            position: fixed;
+            z-index: 30;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+        }
+
+        #addLinkModal .modal-content {
+            width: 300px;
+            height: auto;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 5px;
+        }
+
+        button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background: #0078d4;
+            color: white;
+        }
+
+        #addBtn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #0078d4;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 30px;
+            cursor: pointer;
+        }
+
+        #modeToggle {
+            align-self: flex-start;
+            margin-bottom: 5px;
+        }
+
+        a {
+            color: #00aaff;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+
+    <button id="organizerBtn" onclick="location.href='https://franquitoxd.github.io/inicio/'">Organizador</button>
+
+    <div id="container"></div>
+    <button id="addBtn">+</button>
+
+    <!-- Modal editor -->
+    <div class="modal" id="editorModal">
+        <div class="modal-content">
+            <button id="modeToggle">Editar</button>
+            <div id="editor" contenteditable="false"></div>
+            <div class="buttons">
+                <button id="addLinkBtn">Agregar enlace</button>
+                <button id="closeEditorBtn">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal agregar enlace -->
+    <div id="addLinkModal">
+        <div class="modal-content">
+            <label>Nombre del enlace:</label>
+            <input type="text" id="linkName">
+            <label>URL:</label>
+            <input type="url" id="linkURL">
+            <div class="buttons">
+                <button id="saveLinkBtn">Guardar</button>
+                <button id="cancelLinkBtn">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let notes = JSON.parse(localStorage.getItem("notes")) || [];
+        let currentNoteId = null;
+        let savedSelection = null;
+        let editing = false;
+
+        const container = document.getElementById("container");
+        const addBtn = document.getElementById("addBtn");
+        const editorModal = document.getElementById("editorModal");
+        const editor = document.getElementById("editor");
+        const addLinkBtn = document.getElementById("addLinkBtn");
+        const closeEditorBtn = document.getElementById("closeEditorBtn");
+        const modeToggle = document.getElementById("modeToggle");
+
+        const addLinkModal = document.getElementById("addLinkModal");
+        const linkName = document.getElementById("linkName");
+        const linkURL = document.getElementById("linkURL");
+        const saveLinkBtn = document.getElementById("saveLinkBtn");
+        const cancelLinkBtn = document.getElementById("cancelLinkBtn");
+
+        function saveData() { localStorage.setItem("notes", JSON.stringify(notes)); }
+
+        function renderNotes() {
+            container.innerHTML = "";
+            notes.forEach(n => {
+                const card = document.createElement("div");
+                card.className = "note-card";
+
+                const icon = document.createElement("div");
+                icon.className = "note-icon";
+                icon.innerHTML = '<i class="fa-solid fa-file-lines" style="font-size:50px;color:#FFD700;"></i>';
+                icon.onclick = () => openEditor(n.id);
+
+                const title = document.createElement("div");
+                title.className = "note-title";
+                title.textContent = n.title;
+
+                const actions = document.createElement("div");
+                actions.className = "note-actions";
+
+                // Edita solo el título
+                const editBtn = document.createElement("button");
+                editBtn.textContent = "Editar";
+                editBtn.onclick = () => {
+                    const newTitle = prompt("Editar título:", n.title);
+                    if (newTitle) {
+                        n.title = newTitle;
+                        saveData();
+                        renderNotes();
+                    }
+                };
+
+                const deleteBtn = document.createElement("button");
+                deleteBtn.textContent = "Borrar";
+                deleteBtn.onclick = () => {
+                    if (confirm("¿Seguro que quieres borrar esta nota?")) {
+                        notes = notes.filter(x => x.id !== n.id);
+                        saveData();
+                        renderNotes();
+                    }
+                };
+
+                actions.appendChild(editBtn);
+                actions.appendChild(deleteBtn);
+
+                card.appendChild(icon);
+                card.appendChild(title);
+                card.appendChild(actions);
+
+                container.appendChild(card);
+            });
+        }
+
+        function openEditor(id) {
+            currentNoteId = id;
+            const note = notes.find(n => n.id === id);
+            editor.innerHTML = note.content || "";
+            editing = false;
+            editor.contentEditable = false;
+            modeToggle.textContent = "Editar";
+            editorModal.style.display = "flex";
+            enableLinks();
+        }
+
+        function enableLinks() {
+            const links = editor.querySelectorAll("a");
+            links.forEach(a => {
+                a.replaceWith(a.cloneNode(true));
+                a.addEventListener("click", e => {
+                    e.preventDefault();
+                    window.open(a.href, "_blank");
+                });
+            });
+        }
+
+        function closeEditor() { editorModal.style.display = "none"; }
+
+        modeToggle.onclick = () => {
+            const note = notes.find(n => n.id === currentNoteId);
+            if (!editing) {
+                editing = true;
+                editor.contentEditable = true;
+                modeToggle.textContent = "Ver";
+            } else {
+                note.content = editor.innerHTML;
+                saveData();
+                editing = false;
+                editor.contentEditable = false;
+                modeToggle.textContent = "Editar";
+                enableLinks();
+            }
+        }
+
+        function saveSelection() {
+            const sel = window.getSelection();
+            if (sel.rangeCount > 0) savedSelection = sel.getRangeAt(0);
+        }
+
+        function restoreSelection() {
+            const sel = window.getSelection();
+            if (savedSelection) {
+                sel.removeAllRanges();
+                sel.addRange(savedSelection);
+            }
+        }
+
+        addLinkBtn.onclick = () => {
+            if (!editing) { alert("Debes estar en modo edición"); return; }
+            saveSelection();
+            linkName.value = "";
+            linkURL.value = "";
+            addLinkModal.style.display = "flex";
+        }
+
+        saveLinkBtn.onclick = () => {
+            const name = linkName.value.trim();
+            const url = linkURL.value.trim();
+            if (!name || !url) { alert("Complete ambos campos"); return; }
+            restoreSelection();
+            const a = document.createElement("a");
+            a.href = url;
+            a.textContent = name;
+            a.target = "_blank";
+            a.style.color = "#00aaff";
+            a.style.textDecoration = "underline";
+            const range = window.getSelection().getRangeAt(0);
+            range.insertNode(a);
+            range.collapse(false);
+            addLinkModal.style.display = "none";
+        }
+
+        cancelLinkBtn.onclick = () => addLinkModal.style.display = "none";
+
+        addBtn.onclick = () => {
+            const title = prompt("Nombre de la nota:");
+            if (!title) return;
+            const id = Date.now();
+            notes.push({ id, title, content: "" });
+            saveData();
+            renderNotes();
+        }
+
+        closeEditorBtn.onclick = closeEditor;
+
+        renderNotes();
+    </script>
+</body>
+
+</html>
