@@ -103,6 +103,8 @@
     .modal-content input, .modal-content select, .modal-content textarea { width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #444; background: #2a2a2a; color: white; box-sizing: border-box; outline: none; font-family: inherit; }
     .modal-btn-group { display: flex; gap: 10px; margin-top: 10px; }
     .modal-btn-group button { flex: 1; padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+    #saveItem { background: #0078d4; color: white; }
+    #cancelItem { background: #333; color: #aaa; }
     
     .modal-content.large { width: 90%; max-width: 900px; height: 80vh; padding: 0; overflow: hidden; }
     .editor-header { background: #252525; padding: 10px 20px; display: flex; align-items: center; border-bottom: 1px solid #333; gap: 15px; }
@@ -396,7 +398,7 @@
     
     document.addEventListener('click', () => contextMenu.style.display="none");
 
-    // Guardado Híbrido (Esta función será sobrescrita por el módulo si hay login)
+    // Guardado Híbrido
     window.saveData = function() {
         localStorage.setItem("linksData", JSON.stringify(data));
         localStorage.setItem("folderPINs", JSON.stringify(folderPINs));
@@ -456,7 +458,7 @@
         if(u) document.body.style.backgroundImage = `url('${u}')`;
     }
 
-    // Inicializar vista (aunque falle firebase)
+    // Inicializar vista
     searchBottom.addEventListener("input", () => renderItems(currentFolder));
     setInterval(()=>document.getElementById("clock").textContent=new Date().toLocaleTimeString(),1000);
     
@@ -486,6 +488,12 @@
         document.getElementById("folderPINField").style.display = currentType === 'folder' ? 'block' : 'none';
         document.getElementById("itemTitle").focus();
     }
+
+    // ENTER KEY SUPPORT FOR FORMS
+    document.querySelectorAll(".enter-save").forEach(i => i.addEventListener("keydown", e => { if(e.key==="Enter") saveModalItem(); }));
+    document.getElementById("bgUrlInput").addEventListener("keydown", e => { if(e.key==="Enter") document.getElementById("btnApplyUrl").click(); });
+    document.getElementById("linkName").addEventListener("keydown", e => { if(e.key==="Enter") document.getElementById("saveLinkBtn").click(); });
+    document.getElementById("linkURL").addEventListener("keydown", e => { if(e.key==="Enter") document.getElementById("saveLinkBtn").click(); });
 
     function saveModalItem() {
         const title = document.getElementById("itemTitle").value.trim();
@@ -628,13 +636,10 @@
             btnLogin.style.display = "none";
             btnLogout.style.display = "flex";
             
-            // Sobrescribir la función saveData para usar Firebase
             window.saveData = async function() {
-                // Guardar Local
                 localStorage.setItem("linksData", JSON.stringify(data));
                 localStorage.setItem("folderPINs", JSON.stringify(folderPINs));
                 localStorage.setItem("bgConfig", JSON.stringify(bgConfig));
-                // Guardar Nube
                 try {
                     await setDoc(doc(db, "users", user.uid), {
                         linksData: JSON.stringify(data),
@@ -644,7 +649,6 @@
                 } catch (e) { console.error("Error nube", e); }
             };
 
-            // Cargar datos nube
             try {
                 const docRef = doc(db, "users", user.uid);
                 const docSnap = await getDoc(docRef);
@@ -666,7 +670,6 @@
             userAvatar.style.display = "none";
             btnLogin.style.display = "flex";
             btnLogout.style.display = "none";
-            // Volver a función normal
             window.saveData = function() {
                 localStorage.setItem("linksData", JSON.stringify(data));
                 localStorage.setItem("folderPINs", JSON.stringify(folderPINs));
