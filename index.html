@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Organizador Ultimate</title>
+  <link rel="icon" href="organizador.ico" type="image/x-icon">
   <script src="https://kit.fontawesome.com/3846a067f2.js" crossorigin="anonymous"></script>
   <style>
     /* --- ESTILOS GENERALES --- */
@@ -238,6 +239,9 @@
             <button id="closeEditorBtn" style="padding:5px 15px; background:#d32f2f; border:none; border-radius:4px; color:white; margin-left:10px;">Cerrar</button>
         </div>
         <div class="editor-toolbar" id="editToolbar" style="display:none;">
+            <button class="tool-btn" onclick="document.execCommand('bold')" title="Negrita"><b>B</b></button>
+            <button class="tool-btn" onclick="document.execCommand('italic')" title="Cursiva"><i>I</i></button>
+            <div style="width:1px; height:20px; background:#444; margin:0 5px;"></div>
             <button class="tool-btn" id="addLinkToNoteBtn"><i class="fa-solid fa-link"></i></button>
             <button class="tool-btn" id="addImageToNoteBtn"><i class="fa-regular fa-image"></i></button>
             <button class="tool-btn" id="addDateBtn"><i class="fa-regular fa-clock"></i></button>
@@ -345,7 +349,7 @@
                 if(isTrash) return;
                 if(item.type==='folder') enterFolder(item);
                 else if(item.type==='note') openNoteEditor(item.id);
-                else window.open(item.link, '_blank');
+                else window.open(item.link, '_self'); // ABRIR EN MISMA PESTAÑA
             };
             container.appendChild(div);
         });
@@ -365,7 +369,7 @@
         }
     });
 
-    // Lógica del Menú Contextual y Modales (Igual que antes)
+    // Lógica del Menú Contextual y Modales
     function showContextMenu(e, item) {
         e.preventDefault(); contextItem = item;
         const isTrash = item.parent === 'trash';
@@ -397,7 +401,6 @@
         localStorage.setItem("linksData", JSON.stringify(data));
         localStorage.setItem("folderPINs", JSON.stringify(folderPINs));
         localStorage.setItem("bgConfig", JSON.stringify(bgConfig));
-        // El módulo inyectará lógica de nube aquí
     }
 
     // Funciones de items
@@ -557,6 +560,29 @@
     document.getElementById("exportBtn").onclick = () => { const b=new Blob([JSON.stringify({items:data, pins:folderPINs},null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download="backup.json"; a.click(); };
     document.getElementById("ctxExport").onclick = () => { const f=contextItem; const it=[], pi={}; function col(pid){ data.filter(x=>x.parent===pid).forEach(c=>{it.push(c); if(folderPINs[c.id]) pi[c.id]=folderPINs[c.id]; if(c.type==='folder') col(c.id); }); } it.push(f); if(folderPINs[f.id]) pi[f.id]=folderPINs[f.id]; col(f.id); const b=new Blob([JSON.stringify({items:it, pins:pi},null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=`pack_${normalizeText(f.title)}.json`; a.click(); };
     
+    // EDITOR DE NOTAS
+    const editor = document.getElementById("editor"); let isEditing = false; let currentNoteId = null;
+    function openNoteEditor(id) {
+        currentNoteId = id; const n = data.find(x=>x.id===id); if(!n) return;
+        editor.innerHTML = n.content || ""; document.getElementById("noteEditorTitle").textContent = n.title;
+        isEditing=false; editor.contentEditable=false; 
+        document.getElementById("modeToggle").textContent="Editar"; document.getElementById("modeToggle").style.background="#0078d4";
+        document.getElementById("editToolbar").style.display="none"; document.getElementById("noteEditorModal").style.display="flex"; enableEditorLinks();
+    }
+    document.getElementById("modeToggle").onclick = () => {
+        isEditing = !isEditing; editor.contentEditable = isEditing;
+        if(isEditing) { editor.focus(); document.getElementById("modeToggle").textContent="Guardar"; document.getElementById("modeToggle").style.background="#4caf50"; document.getElementById("editToolbar").style.display="flex"; } 
+        else { const n = data.find(x=>x.id===currentNoteId); if(n){ n.content=editor.innerHTML; saveData(); } document.getElementById("modeToggle").textContent="Editar"; document.getElementById("modeToggle").style.background="#0078d4"; document.getElementById("editToolbar").style.display="none"; enableEditorLinks(); }
+    };
+    function enableEditorLinks(){ editor.querySelectorAll("a").forEach(a=>a.onclick=e=>{if(!isEditing){e.preventDefault();window.open(a.href,"_blank")}}); }
+    document.getElementById("closeEditorBtn").onclick = () => { if(isEditing) { const n = data.find(x=>x.id===currentNoteId); if(n) { n.content=editor.innerHTML; saveData(); }} document.getElementById("noteEditorModal").style.display="none"; };
+    const insert = n => { editor.focus(); const s=window.getSelection(); if(s.rangeCount){ const r=s.getRangeAt(0); r.deleteContents(); r.insertNode(n); r.setStartAfter(n); s.removeAllRanges(); s.addRange(r); } else editor.appendChild(n); };
+    document.getElementById("addImageToNoteBtn").onclick=()=>{ const u=prompt("URL Imagen:"); if(u){ const i=document.createElement("img"); i.src=u; insert(i); } };
+    document.getElementById("addDateBtn").onclick=()=>{ const s=document.createElement("span"); s.style.fontSize="12px"; s.style.color="#888"; s.textContent=` [${new Date().toLocaleString()}] `; insert(s); };
+    document.getElementById("addLinkToNoteBtn").onclick=()=>{ document.getElementById("addLinkModal").style.display="flex"; document.getElementById("linkName").value=""; document.getElementById("linkURL").value=""; };
+    document.getElementById("cancelLinkBtn").onclick=()=>{ document.getElementById("addLinkModal").style.display="none"; };
+    document.getElementById("saveLinkBtn").onclick=()=>{ const n=document.getElementById("linkName").value, u=document.getElementById("linkURL").value; if(n&&u){ const a=document.createElement("a"); a.href=u; a.textContent=n; a.target="_blank"; insert(a); } document.getElementById("addLinkModal").style.display="none"; };
+
     // Check auto delete
     const THIRTY = 30 * 24 * 60 * 60 * 1000; const now = Date.now(); let ch = false;
     [...data].forEach(i => { if (i.parent === 'trash' && i.deletedDate && (now - i.deletedDate > THIRTY)) { if(i.type==='folder') deleteItemRecursively(i.id); else data=data.filter(x=>x.id!==i.id); ch = true; } });
