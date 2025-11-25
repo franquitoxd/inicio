@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Organizador Ultimate</title>
+  <script src="https://kit.fontawesome.com/3846a067f2.js" crossorigin="anonymous"></script>
+  <style>
+    /* --- ESTILOS GENERALES --- */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0; padding: 0;
+      background-color: #121212;
+      background-size: cover; background-position: center; background-attachment: fixed;
+      color: #e0e0e0; overflow-x: hidden; user-select: none;
+      min-height: 100vh; transition: background 0.5s ease-in-out;
+    }
+    .bg-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.4); z-index: -1; pointer-events: none; }
+
+    /* RELOJ */
+    #clock {
+      position: fixed; bottom: 20px; left: 20px;
+      background: rgba(20, 20, 20, 0.8); color: #00aaff;
+      padding: 10px 15px; border-radius: 8px; font-family: monospace; font-size: 16px;
+      z-index: 10; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+      border: 1px solid #444; backdrop-filter: blur(5px);
+    }
+
+    /* MENÚ LATERAL */
+    #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); display: none; z-index: 25; backdrop-filter: blur(2px); }
+    #sideMenu {
+      position: fixed; top: 0; right: 0; width: 280px; height: 100%;
+      background: rgba(30, 30, 30, 0.95); color: white; padding: 20px;
+      box-shadow: -5px 0 15px rgba(0, 0, 0, 0.7); display: none;
+      flex-direction: column; gap: 15px; z-index: 30; overflow-y: auto;
+    }
+    #sideMenu h3 { margin: 0 0 10px 0; text-align: center; border-bottom: 1px solid #444; padding-bottom: 10px; }
+
+    /* LOGIN SECTION */
+    #userSection {
+        background: #252525; padding: 15px; border-radius: 8px; border: 1px solid #444;
+        text-align: center; margin-bottom: 10px;
+    }
+    #userAvatar { width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px; display: none; margin: 0 auto 10px auto; }
+    #userName { font-size: 14px; font-weight: bold; margin-bottom: 10px; display: block; }
+    .auth-btn { width: 100%; padding: 8px; border-radius: 5px; cursor: pointer; border: none; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    #btnLogin { background: #4285F4; color: white; }
+    #btnLogin:hover { background: #357ae8; }
+    #btnLogout { background: #d32f2f; color: white; display: none; }
+    #btnLogout:hover { background: #b71c1c; }
+
+    .menu-btn {
+      background: #333; color: white; border: 1px solid #444;
+      border-radius: 6px; padding: 10px 15px; cursor: pointer;
+      width: 100%; text-align: left; display: flex; justify-content: space-between; transition: all 0.2s;
+    }
+    .menu-btn:hover { background: #444; border-color: #0078d4; }
+    .menu-section { margin-top: 10px; border-top: 1px solid #444; padding-top: 10px; }
+
+    /* CONTENEDOR PRINCIPAL */
+    #container { display: flex; flex-wrap: wrap; padding: 20px; gap: 20px; margin-top: 80px; margin-bottom: 120px; justify-content: flex-start; }
+
+    /* NAVEGACIÓN SUPERIOR */
+    .top-nav { position: fixed; top: 20px; left: 20px; display: flex; gap: 10px; z-index: 100; }
+    #backBtn, #headerEmptyTrashBtn {
+      background: rgba(30, 30, 30, 0.9); color: white; border: 1px solid #444; border-radius: 8px; padding: 8px 15px; cursor: pointer; display: none; font-weight: bold; backdrop-filter: blur(5px); box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    }
+    #headerEmptyTrashBtn { background: rgba(220, 53, 69, 0.9); border-color: #ff6b6b; }
+
+    /* ITEMS */
+    .item {
+      width: 120px; text-align: center; cursor: grab; position: relative; background: rgba(30, 30, 30, 0.85); border-radius: 12px; padding: 15px 10px; transition: transform 0.2s, background 0.2s; border: 2px solid transparent; backdrop-filter: blur(5px);
+    }
+    .item:hover { transform: translateY(-5px); background: rgba(50, 50, 50, 0.95); border-color: #555; }
+    .item.dragging { opacity: 0.5; border: 2px dashed #0078d4; transform: scale(0.9); }
+    .item.drag-over-folder { border: 2px solid #00ff00; background: rgba(0, 255, 0, 0.1); }
+    .item.drag-over-swap { border: 2px solid #00aaff; }
+    .icon-box { width: 80px; height: 80px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.05); margin: 0 auto; pointer-events: none; }
+    .icon-box i { font-size: 40px; } .icon-box img { width: 100%; height: 100%; object-fit: cover; }
+    .item-title { margin-top: 8px; font-size: 13px; word-break: break-word; line-height: 1.3; min-height: 34px; font-weight: 500; pointer-events: none; }
+    .item-date { font-size: 10px; color: #ff6b6b; margin-top: 2px; }
+
+    /* MENU CONTEXTUAL */
+    #contextMenu { display: none; position: absolute; z-index: 100; width: 220px; background: #252525; border: 1px solid #444; box-shadow: 0 5px 15px rgba(0,0,0,0.5); border-radius: 6px; overflow: hidden; }
+    #contextMenu button { width: 100%; background: none; border: none; color: white; padding: 10px 15px; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+    #contextMenu button:hover { background: #0078d4; }
+    .separator { height: 1px; background: #444; margin: 5px 0; }
+
+    /* FLOTANTES */
+    #addBtn { position: fixed; bottom: 90px; right: 30px; background: #0078d4; color: white; border: none; border-radius: 50%; width: 60px; height: 60px; font-size: 28px; cursor: pointer; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6); z-index: 5; }
+    .add-options { position: fixed; bottom: 160px; right: 38px; display: none; flex-direction: column; gap: 15px; z-index: 5; }
+    .add-options button { background: #2a2a2a; color: white; border: 1px solid #444; border-radius: 50%; width: 45px; height: 45px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+    .tooltip { position: absolute; right: 55px; top: 12px; background: #333; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+    .add-options div:hover .tooltip { opacity: 1; }
+
+    /* BUSCADOR */
+    #searchBottom { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); width: 50%; max-width: 500px; padding: 12px 20px; border-radius: 30px; border: 1px solid #444; font-size: 16px; background: rgba(30, 30, 30, 0.9); color: white; z-index: 2; outline: none; backdrop-filter: blur(5px); }
+
+    /* MODALES */
+    .modal { display: none; position: fixed; z-index: 50; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); justify-content: center; align-items: center; backdrop-filter: blur(3px); }
+    .modal-content { background: #1e1e1e; color: white; padding: 25px; border-radius: 12px; width: 350px; display: flex; flex-direction: column; gap: 12px; border: 1px solid #444; }
+    .modal-content input, .modal-content select, .modal-content textarea { width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #444; background: #2a2a2a; color: white; box-sizing: border-box; outline: none; font-family: inherit; }
+    .modal-btn-group { display: flex; gap: 10px; margin-top: 10px; }
+    .modal-btn-group button { flex: 1; padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+    
+    .modal-content.large { width: 90%; max-width: 900px; height: 80vh; padding: 0; overflow: hidden; }
+    .editor-header { background: #252525; padding: 10px 20px; display: flex; align-items: center; border-bottom: 1px solid #333; gap: 15px; }
+    #editor { flex: 1; background: #121212; padding: 20px; overflow-y: auto; outline: none; line-height: 1.6; white-space: pre-wrap; }
+    #editor img { max-width: 100%; border-radius: 5px; } #editor a { color: #00aaff; }
+    .editor-toolbar { display: flex; gap: 5px; background: #1e1e1e; padding: 5px 10px; border-bottom: 1px solid #333; }
+    .tool-btn { background: transparent; border: none; color: #aaa; padding: 6px 10px; cursor: pointer; } .tool-btn:hover { color: white; background: #333; border-radius: 4px; }
+
+    /* FONDOS */
+    .bg-tabs { display: flex; gap: 5px; margin-bottom: 10px; }
+    .bg-tab { flex: 1; background: #252525; border: none; color: #aaa; padding: 8px; cursor: pointer; border-radius: 4px; }
+    .bg-tab.active { background: #0078d4; color: white; }
+    .bg-panel { display: none; flex-direction: column; gap: 10px; } .bg-panel.active { display: flex; }
+    .pc-options { display:flex; gap:10px; margin-bottom:10px; }
+    .pc-option-card { flex:1; background:#2a2a2a; padding:10px; border-radius:5px; text-align:center; cursor:pointer; border:1px solid #444; }
+    .pc-option-card:hover { background:#333; border-color:#0078d4; }
+  </style>
+</head>
+
+<body>
+
+  <div class="bg-overlay"></div>
+  <div id="clock">00:00:00</div>
+  <div id="overlay"></div>
+  <input type="color" id="ctxColorInput" style="display:none;">
+
+  <div id="contextMenu">
+    <button id="ctxOpenTab" style="display:none;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir pestaña</button>
+    <button id="ctxOpenWin" style="display:none;"><i class="fa-solid fa-window-restore"></i> Abrir ventana</button>
+    <button id="ctxOpenAll" style="display:none; color:#00aaff;"><i class="fa-solid fa-layer-group"></i> Abrir todo</button>
+    <div class="separator" id="ctxSep1" style="display:none;"></div>
+    <button id="ctxCopyLink" style="display:none;"><i class="fa-regular fa-copy"></i> Copiar URL</button>
+    <button id="ctxColor" style="display:none;"><i class="fa-solid fa-palette"></i> Cambiar Color</button>
+    <button id="ctxDuplicate"><i class="fa-regular fa-clone"></i> Duplicar</button>
+    <button id="ctxEdit"><i class="fa-solid fa-pen"></i> Editar</button>
+    <button id="ctxExport" style="display:none;"><i class="fa-solid fa-file-export"></i> Exportar</button>
+    <div class="separator"></div>
+    <button id="ctxDelete" style="color:#ff6b6b;"><i class="fa-solid fa-trash"></i> Papelera</button>
+    <button id="ctxRestore" style="display:none; color:#4caf50;"><i class="fa-solid fa-trash-arrow-up"></i> Restaurar</button>
+    <button id="ctxPermDelete" style="display:none; color:#ff4444;"><i class="fa-solid fa-ban"></i> Eliminar</button>
+  </div>
+
+  <div id="sideMenu">
+    <h3><i class="fa-solid fa-layer-group"></i> Menú</h3>
+    <div id="userSection">
+        <img id="userAvatar" src="" alt="User">
+        <span id="userName">Sin Sesión</span>
+        <button id="btnLogin" class="auth-btn"><i class="fa-brands fa-google"></i> Iniciar con Google</button>
+        <button id="btnLogout" class="auth-btn"><i class="fa-solid fa-right-from-bracket"></i> Cerrar Sesión</button>
+    </div>
+    <div class="menu-section" style="border-top:none; margin-top:0;">
+        <button class="menu-btn" id="changeBgBtn"><i class="fa-regular fa-image"></i> Cambiar Fondo</button>
+        <button class="menu-btn" id="trashBtn" style="color:#ff6b6b;"><i class="fa-solid fa-trash"></i> Papelera de Reciclaje</button>
+    </div>
+    <div class="menu-section">
+        <button class="menu-btn" id="filesBtn">Copia de Seguridad <i class="fa-solid fa-chevron-down"></i></button>
+        <div class="subOptions" id="filesOptions" style="display:none; margin-top:5px;">
+            <button class="menu-btn" id="exportBtn" style="font-size:13px; padding:8px;"><i class="fa-solid fa-download"></i> Guardar Local</button>
+            <button class="menu-btn" id="importBtn" style="font-size:13px; padding:8px;"><i class="fa-solid fa-upload"></i> Cargar Local</button>
+            <input type="file" id="importFile" accept=".json" style="display:none">
+        </div>
+    </div>
+  </div>
+
+  <button id="menuBtn" style="cursor: pointer; position:fixed; top:20px; right:20px; z-index:30; background:rgba(30,30,30,0.8); color:white; border:1px solid #444; border-radius:8px; padding:8px 12px; font-size:20px;"><i class="fa-solid fa-bars"></i></button>
+
+  <div class="top-nav">
+      <button id="backBtn"><i class="fa-solid fa-arrow-left"></i> Atrás</button>
+      <button id="headerEmptyTrashBtn"><i class="fa-solid fa-fire"></i> Vaciar Papelera</button>
+  </div>
+
+  <div id="container"></div>
+  <input type="text" id="searchBottom" placeholder="Buscar...">
+
+  <button id="addBtn">+</button>
+  <div class="add-options" id="addOptions">
+    <div style="position:relative"><span class="tooltip">Carpeta</span><button id="addFolderBtn" style="color:#FFD700"><i class="fa-solid fa-folder"></i></button></div>
+    <div style="position:relative"><span class="tooltip">Enlace</span><button id="addLinkBtn" style="color:#00aaff"><i class="fa-solid fa-link"></i></button></div>
+    <div style="position:relative"><span class="tooltip">Nota</span><button id="addNoteBtn" style="color:#4caf50"><i class="fa-solid fa-file-lines"></i></button></div>
+  </div>
+
+  <div class="modal" id="bgModal">
+    <div class="modal-content" style="width:400px;">
+        <h3>Fondo de Pantalla</h3>
+        <div class="bg-tabs">
+            <button class="bg-tab active" id="tabBtn-local">PC</button>
+            <button class="bg-tab" id="tabBtn-url">Link</button>
+            <button class="bg-tab" id="tabBtn-random">Aleatorio</button>
+        </div>
+        <div id="tab-local" class="bg-panel active">
+            <div class="pc-options">
+                <div class="pc-option-card" id="optSingle"><i class="fa-regular fa-image"></i><br>Una Imagen</div>
+                <div class="pc-option-card" id="optMulti"><i class="fa-solid fa-images"></i><br>Aleatorio (Multi)</div>
+            </div>
+            <div id="pcSingle">
+                <p style="font-size:13px; color:#aaa;">Imagen estática:</p>
+                <input type="file" id="bgFileInput" accept="image/*">
+                <button id="btnApplyLocal" style="background:#0078d4; border:none; padding:10px; color:white; border-radius:5px; cursor:pointer; width:100%; margin-top:10px;">Aplicar</button>
+            </div>
+            <div id="pcMulti" style="display:none;">
+                <p style="font-size:13px; color:#aaa;">Selecciona varias imágenes.</p>
+                <input type="file" id="bgFilesMulti" accept="image/*" multiple>
+                <button id="btnApplyMulti" style="background:#0078d4; border:none; padding:10px; color:white; border-radius:5px; cursor:pointer; width:100%; margin-top:10px;">Guardar Lista</button>
+            </div>
+        </div>
+        <div id="tab-url" class="bg-panel">
+            <input type="url" id="bgUrlInput" placeholder="https://...">
+            <button id="btnApplyUrl" style="background:#0078d4; border:none; padding:10px; color:white; border-radius:5px; cursor:pointer; width:100%; margin-top:10px;">Aplicar</button>
+        </div>
+        <div id="tab-random" class="bg-panel">
+            <textarea id="bgRandomList" rows="5" placeholder="https://..."></textarea>
+            <button id="btnApplyRandom" style="background:#0078d4; border:none; padding:10px; color:white; border-radius:5px; cursor:pointer; width:100%; margin-top:10px;">Guardar</button>
+        </div>
+        <button id="btnCloseBg" style="background:#333; border:none; padding:10px; color:white; border-radius:5px; cursor:pointer; margin-top:10px;">Cerrar</button>
+    </div>
+  </div>
+
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <h3 id="modalTitle">Agregar</h3>
+      <label>Título:</label><input type="text" id="itemTitle" class="enter-save">
+      <div id="linkFields" style="display:none;"><label>URL:</label><input type="url" id="itemLink" class="enter-save"></div>
+      <div id="colorFields" style="display:none;"><label>Color:</label><input type="color" id="itemColor" style="height:40px;"></div>
+      <div id="folderPINField" style="display:none;"><label>PIN:</label><input type="text" id="itemPIN" class="enter-save"></div>
+      <div class="modal-btn-group"><button id="saveItem" style="background:#0078d4;color:white;">Guardar</button><button id="cancelItem">Cancelar</button></div>
+    </div>
+  </div>
+
+  <div class="modal" id="noteEditorModal">
+    <div class="modal-content large">
+        <div class="editor-header">
+            <h3 id="noteEditorTitle">Nota</h3>
+            <button id="modeToggle" style="padding:5px 15px; background:#0078d4; border:none; border-radius:4px; color:white;">Editar</button>
+            <button id="closeEditorBtn" style="padding:5px 15px; background:#d32f2f; border:none; border-radius:4px; color:white; margin-left:10px;">Cerrar</button>
+        </div>
+        <div class="editor-toolbar" id="editToolbar" style="display:none;">
+            <button class="tool-btn" id="addLinkToNoteBtn"><i class="fa-solid fa-link"></i></button>
+            <button class="tool-btn" id="addImageToNoteBtn"><i class="fa-regular fa-image"></i></button>
+            <button class="tool-btn" id="addDateBtn"><i class="fa-regular fa-clock"></i></button>
+        </div>
+        <div id="editor" contenteditable="false"></div>
+    </div>
+  </div>
+  
+  <div id="addLinkModal" class="modal">
+    <div class="modal-content">
+        <h3>Insertar Enlace</h3>
+        <input type="text" id="linkName" placeholder="Texto">
+        <input type="url" id="linkURL" placeholder="URL">
+        <div class="modal-btn-group"><button id="saveLinkBtn" style="background:#0078d4;color:white;">Insertar</button><button id="cancelLinkBtn">Cancelar</button></div>
+    </div>
+  </div>
+
+  <script>
+    // Variables Globales
+    let data = JSON.parse(localStorage.getItem("linksData")) || [];
+    let folderPINs = JSON.parse(localStorage.getItem("folderPINs")) || {};
+    let bgConfig = JSON.parse(localStorage.getItem("bgConfig")) || { mode: 'url', value: '' };
+    
+    let currentFolder = null;
+    let folderHistory = [];
+    let editItemId = null;
+    let currentType = "folder";
+    let dragSrcId = null;
+    let contextItem = null;
+    let dbLocal = null; // IndexedDB
+    let currentUser = null; // Set by Module Script
+
+    // Referencias UI
+    const container = document.getElementById("container");
+    const searchBottom = document.getElementById("searchBottom");
+    const backBtn = document.getElementById("backBtn");
+    const headerEmpty = document.getElementById("headerEmptyTrashBtn");
+    const sideMenu = document.getElementById("sideMenu");
+    const overlay = document.getElementById("overlay");
+    const addOptions = document.getElementById("addOptions");
+    const contextMenu = document.getElementById("contextMenu");
+    const ctxColorInput = document.getElementById("ctxColorInput");
+
+    // Funciones Utiles
+    const normalizeText = (t) => t ? t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : "";
+    const getRandomColor = () => { const l="0123456789ABCDEF"; let c="#"; for(let i=0;i<6;i++) c+=l[Math.floor(Math.random()*16)]; return c; };
+
+    // IndexedDB Local
+    const req = indexedDB.open("WallpaperDB", 1);
+    req.onupgradeneeded = e => { const d = e.target.result; if(!d.objectStoreNames.contains("wallpapers")) d.createObjectStore("wallpapers", { autoIncrement: true }); };
+    req.onsuccess = e => { dbLocal = e.target.result; checkBgMode(); };
+
+    // Renderizado
+    function renderItems(folderId = null) {
+        container.innerHTML = "";
+        const isTrash = folderId === 'trash';
+        
+        const trashCount = data.filter(i => i.parent === 'trash').length;
+        headerEmpty.style.display = (isTrash && trashCount > 0) ? 'block' : 'none';
+        
+        if (folderId) backBtn.style.display = "block"; else backBtn.style.display = "none";
+        
+        backBtn.onclick = () => { 
+            if(isTrash) { currentFolder = null; renderItems(); }
+            else if(folderHistory.length > 0) { currentFolder = folderHistory.pop(); renderItems(currentFolder); } 
+            else { currentFolder = null; renderItems(); }
+        };
+
+        let items = data.filter(i => i.parent === folderId);
+        const search = normalizeText(searchBottom.value);
+        if (search && !isTrash) items = data.filter(i => i.parent!=='trash' && (normalizeText(i.title).includes(search) || (i.type==='link' && normalizeText(i.link).includes(search))));
+
+        if (items.length === 0) container.innerHTML = `<div style="width:100%;text-align:center;color:#777;margin-top:50px;font-size:18px;">${isTrash?'Papelera vacía':'Carpeta vacía'}</div>`;
+
+        items.forEach(item => {
+            const div = document.createElement("div"); div.className = "item";
+            if(!search) {
+                div.draggable = true;
+                div.addEventListener('dragstart', handleDragStart);
+                div.addEventListener('dragenter', handleDragEnter);
+                div.addEventListener('dragover', handleDragOver);
+                div.addEventListener('dragleave', handleDragLeave);
+                div.addEventListener('drop', handleDrop);
+                div.addEventListener('dragend', handleDragEnd);
+            }
+            div.dataset.id = item.id;
+            div.addEventListener('contextmenu', (e) => showContextMenu(e, item));
+
+            const iconBox = document.createElement("div"); iconBox.className = "icon-box";
+            if(item.type==='folder') iconBox.innerHTML = `<i class="fa-solid ${data.some(x=>x.parent===item.id)?'fa-folder-open':'fa-folder'}" style="color:${item.color||'#FFD700'}"></i>`;
+            else if(item.type==='note') iconBox.innerHTML = `<i class="fa-solid fa-file-lines" style="color:${item.color||'#4caf50'}"></i>`;
+            else {
+                const img = document.createElement("img"); img.src = `https://www.google.com/s2/favicons?sz=128&domain_url=${item.link}`;
+                img.onerror = () => { img.style.display='none'; iconBox.innerHTML = '<i class="fa-solid fa-globe" style="color:#00aaff"></i>'; };
+                iconBox.appendChild(img);
+            }
+            let h = `<div class="item-title">${item.title}</div>`;
+            if(isTrash && item.deletedDate) {
+                const d = 30 - Math.floor((Date.now()-item.deletedDate)/(1000*60*60*24));
+                h += `<div class="item-date">${d} días rest.</div>`;
+            }
+            div.innerHTML += h; div.prepend(iconBox);
+            
+            div.onclick = () => {
+                if(isTrash) return;
+                if(item.type==='folder') enterFolder(item);
+                else if(item.type==='note') openNoteEditor(item.id);
+                else window.open(item.link, '_blank');
+            };
+            container.appendChild(div);
+        });
+    }
+
+    // Event Listeners BASICOS
+    document.getElementById("menuBtn").onclick = () => { sideMenu.style.display="flex"; overlay.style.display="block"; };
+    overlay.onclick = () => { sideMenu.style.display="none"; overlay.style.display="none"; };
+    document.getElementById("addBtn").onclick = () => addOptions.style.display = (addOptions.style.display==="flex"?"none":"flex");
+    
+    document.addEventListener("keydown", e => {
+        if(e.key==="Escape") {
+            document.querySelectorAll('.modal').forEach(m=>m.style.display='none');
+            sideMenu.style.display='none'; overlay.style.display='none';
+            contextMenu.style.display='none'; addOptions.style.display='none';
+            document.getElementById("noteEditorModal").style.display="none";
+        }
+    });
+
+    // Lógica del Menú Contextual y Modales (Igual que antes)
+    function showContextMenu(e, item) {
+        e.preventDefault(); contextItem = item;
+        const isTrash = item.parent === 'trash';
+        const isLink = item.type === 'link';
+        
+        document.getElementById("ctxOpenTab").style.display = isLink ? 'block':'none';
+        document.getElementById("ctxOpenWin").style.display = isLink ? 'block':'none';
+        document.getElementById("ctxOpenAll").style.display = (item.type==='folder' && !isTrash) ? 'block':'none';
+        document.getElementById("ctxSep1").style.display = (isLink||item.type==='folder')?'block':'none';
+        document.getElementById("ctxCopyLink").style.display = isLink?'block':'none';
+        document.getElementById("ctxColor").style.display = (!isTrash && (item.type==='folder'||item.type==='note'))?'block':'none';
+        document.getElementById("ctxDuplicate").style.display = isTrash?'none':'block';
+        document.getElementById("ctxExport").style.display = (item.type==='folder'&&!isTrash)?'block':'none';
+        document.getElementById("ctxEdit").style.display = isTrash?'none':'block';
+        document.getElementById("ctxDelete").style.display = isTrash?'none':'block';
+        document.getElementById("ctxRestore").style.display = isTrash?'block':'none';
+        document.getElementById("ctxPermDelete").style.display = isTrash?'block':'none';
+
+        contextMenu.style.display = "block";
+        let x = e.pageX, y = e.pageY;
+        if(x+220 > window.innerWidth) x-=220; if(y+350 > window.innerHeight) y-=350;
+        contextMenu.style.left=`${x}px`; contextMenu.style.top=`${y}px`;
+    }
+    
+    document.addEventListener('click', () => contextMenu.style.display="none");
+
+    // Guardado Híbrido (Esta función será sobrescrita por el módulo si hay login)
+    window.saveData = function() {
+        localStorage.setItem("linksData", JSON.stringify(data));
+        localStorage.setItem("folderPINs", JSON.stringify(folderPINs));
+        localStorage.setItem("bgConfig", JSON.stringify(bgConfig));
+        // El módulo inyectará lógica de nube aquí
+    }
+
+    // Funciones de items
+    function enterFolder(item) {
+        if(folderPINs[item.id] && prompt("PIN")!==folderPINs[item.id]) return;
+        folderHistory.push(currentFolder); currentFolder=item.id; renderItems(item.id);
+    }
+    
+    // Drag Drop Logic
+    function handleDragStart(e) { this.classList.add('dragging'); dragSrcId = parseInt(this.dataset.id); e.dataTransfer.effectAllowed = 'move'; };
+    function handleDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; return false; };
+    function handleDragEnter(e) {
+        const tid = parseInt(this.dataset.id); const t = data.find(i=>i.id===tid);
+        if(t && t.type==='folder' && dragSrcId!==tid) this.classList.add('drag-over-folder');
+        else this.classList.add('drag-over-swap');
+    };
+    function handleDragLeave(e) { this.classList.remove('drag-over-folder'); this.classList.remove('drag-over-swap'); };
+    function handleDrop(e) {
+        e.stopPropagation(); const did = parseInt(this.dataset.id);
+        const t = data.find(i=>i.id===did); const s = data.find(i=>i.id===dragSrcId);
+        if(dragSrcId !== did) {
+            if(t.type==='folder' && s.id!==t.id) {
+                let curr = t; let safe = true;
+                while(curr && curr.parent) { if(curr.parent===s.id) safe=false; curr = data.find(x=>x.id===curr.parent); }
+                if(!safe) alert("No mover carpeta dentro de si misma");
+                else if(confirm(`Mover a ${t.title}?`)) { s.parent=t.id; saveData(); renderItems(currentFolder); }
+            } else {
+                const si = data.findIndex(x=>x.id===dragSrcId);
+                const ti = data.findIndex(x=>x.id===did);
+                const [mov] = data.splice(si, 1);
+                data.splice(data.findIndex(x=>x.id===did), 0, mov);
+                saveData(); renderItems(currentFolder);
+            }
+        }
+        return false;
+    };
+    function handleDragEnd(e) { this.classList.remove('dragging'); document.querySelectorAll('.item').forEach(i=>{i.classList.remove('drag-over-folder');i.classList.remove('drag-over-swap');}); };
+
+    // Fondo
+    function checkBgMode() { if(bgConfig) applyBackground(bgConfig); }
+    function applyBackground(c) {
+        if(!c) return; let u = '';
+        if(c.mode==='local'||c.mode==='url') u=c.value;
+        else if(c.mode==='random' && Array.isArray(c.value)) u=c.value[Math.floor(Math.random()*c.value.length)];
+        else if(c.mode==='local-multi' && dbLocal) {
+            const tx = dbLocal.transaction("wallpapers","readonly");
+            tx.objectStore("wallpapers").getAll().onsuccess = e => {
+                const f = e.target.result;
+                if(f.length) document.body.style.backgroundImage = `url('${URL.createObjectURL(f[Math.floor(Math.random()*f.length)])}')`;
+            };
+            return;
+        }
+        if(u) document.body.style.backgroundImage = `url('${u}')`;
+    }
+
+    // Inicializar vista (aunque falle firebase)
+    searchBottom.addEventListener("input", () => renderItems(currentFolder));
+    setInterval(()=>document.getElementById("clock").textContent=new Date().toLocaleTimeString(),1000);
+    
+    // Botones Modal UI
+    document.getElementById("addFolderBtn").onclick = () => { openModal(null, "folder"); addOptions.style.display="none"; };
+    document.getElementById("addLinkBtn").onclick = () => { openModal(null, "link"); addOptions.style.display="none"; };
+    document.getElementById("addNoteBtn").onclick = () => { openModal(null, "note"); addOptions.style.display="none"; };
+    document.getElementById("saveItem").onclick = saveModalItem;
+    document.getElementById("cancelItem").onclick = () => document.getElementById("modal").style.display="none";
+    
+    function openModal(id, type) {
+        document.getElementById("modal").style.display = "flex"; editItemId = id;
+        document.getElementById("modalTitle").textContent = id ? "Editar" : "Agregar";
+        document.getElementById("itemTitle").value = ""; document.getElementById("itemLink").value=""; document.getElementById("itemPIN").value="";
+        if (id) {
+            const i = data.find(x => x.id === id); currentType = i.type;
+            document.getElementById("itemTitle").value = i.title;
+            if(i.type==='link') document.getElementById("itemLink").value = i.link;
+            if(i.type==='folder' || i.type==='note') { document.getElementById("itemColor").value = i.color || "#FFD700"; }
+            if(i.type==='folder') document.getElementById("itemPIN").value = folderPINs[i.id]||"";
+        } else {
+            currentType = type || "folder";
+            document.getElementById("itemColor").value = (currentType==="folder" || currentType==="note") ? getRandomColor() : "#FFD700";
+        }
+        document.getElementById("linkFields").style.display = currentType === 'link' ? 'block' : 'none';
+        document.getElementById("colorFields").style.display = (currentType === 'folder' || currentType === 'note') ? 'block' : 'none';
+        document.getElementById("folderPINField").style.display = currentType === 'folder' ? 'block' : 'none';
+        document.getElementById("itemTitle").focus();
+    }
+
+    function saveModalItem() {
+        const title = document.getElementById("itemTitle").value.trim();
+        if(!title) return;
+        if(currentType === 'link') {
+            const link = document.getElementById("itemLink").value.trim(); if(!link) return;
+            if(editItemId) { const i = data.find(x=>x.id===editItemId); i.title=title; i.link=link; }
+            else data.push({id:Date.now(), type:'link', title, link, parent:currentFolder});
+        } else if(currentType === 'folder' || currentType === 'note') {
+            const color = document.getElementById("itemColor").value;
+            if (currentType === 'folder') {
+                const pin = document.getElementById("itemPIN").value.trim();
+                if(editItemId) { const i = data.find(x=>x.id===editItemId); i.title=title; i.color=color; if(pin) folderPINs[i.id]=pin; else delete folderPINs[i.id]; }
+                else { const id = Date.now(); data.push({id, type:'folder', title, color, parent:currentFolder}); if(pin) folderPINs[id]=pin; }
+            } else {
+                if(editItemId) { const i = data.find(x=>x.id===editItemId); i.title=title; i.color=color; }
+                else { data.push({id:Date.now(), type:'note', title, content:"", color: color, parent:currentFolder}); }
+            }
+        }
+        saveData(); renderItems(currentFolder); document.getElementById("modal").style.display="none";
+    }
+
+    // Listeners Fondo UI
+    document.getElementById("changeBgBtn").onclick = () => {
+        document.getElementById('bgModal').style.display = 'flex';
+        if(bgConfig.mode === 'random') document.getElementById('bgRandomList').value = Array.isArray(bgConfig.value) ? bgConfig.value.join('\n') : '';
+        else if (bgConfig.mode === 'url') document.getElementById('bgUrlInput').value = bgConfig.value;
+        switchBgTab(bgConfig.mode === 'local-multi' ? 'local' : (bgConfig.mode || 'local'));
+    };
+    function switchBgTab(t) {
+        document.querySelectorAll('.bg-tab').forEach(b=>b.classList.remove('active'));
+        document.querySelectorAll('.bg-panel').forEach(p=>p.classList.remove('active'));
+        document.getElementById(`tabBtn-${t}`).classList.add('active');
+        document.getElementById(`tab-${t}`).classList.add('active');
+    }
+    document.getElementById("tabBtn-local").onclick = () => switchBgTab('local');
+    document.getElementById("tabBtn-url").onclick = () => switchBgTab('url');
+    document.getElementById("tabBtn-random").onclick = () => switchBgTab('random');
+    document.getElementById("optSingle").onclick = () => { document.getElementById('pcSingle').style.display='block'; document.getElementById('pcMulti').style.display='none'; };
+    document.getElementById("optMulti").onclick = () => { document.getElementById('pcSingle').style.display='none'; document.getElementById('pcMulti').style.display='block'; };
+    document.getElementById("btnApplyLocal").onclick = () => {
+        const f=document.getElementById('bgFileInput').files[0]; if(!f)return;
+        const r=new FileReader(); r.onload=e=>{ bgConfig={mode:'local',value:e.target.result}; saveData(); checkBgMode(); document.getElementById('bgModal').style.display='none'; };
+        r.readAsDataURL(f);
+    };
+    document.getElementById("btnApplyMulti").onclick = () => {
+        const fs=document.getElementById('bgFilesMulti').files; if(!fs.length)return;
+        const tx=dbLocal.transaction("wallpapers","readwrite"); tx.objectStore("wallpapers").clear().onsuccess=()=>{
+            for(let f of fs) tx.objectStore("wallpapers").add(f);
+            bgConfig={mode:'local-multi',value:''}; saveData(); checkBgMode(); document.getElementById('bgModal').style.display='none';
+        };
+    };
+    document.getElementById("btnApplyUrl").onclick = () => { const v=document.getElementById('bgUrlInput').value; if(!v)return; bgConfig={mode:'url',value:v}; saveData(); checkBgMode(); document.getElementById('bgModal').style.display='none'; };
+    document.getElementById("btnApplyRandom").onclick = () => { const v=document.getElementById('bgRandomList').value; if(!v)return; bgConfig={mode:'random',value:v.split('\n').map(x=>x.trim()).filter(x=>x)}; saveData(); checkBgMode(); document.getElementById('bgModal').style.display='none'; };
+    document.getElementById("btnCloseBg").onclick = () => document.getElementById('bgModal').style.display='none';
+
+    // Context Actions
+    document.getElementById("ctxDuplicate").onclick = () => { const n=JSON.parse(JSON.stringify(contextItem)); n.id=Date.now(); n.title+=" (Copia)"; data.push(n); if(folderPINs[contextItem.id]) folderPINs[n.id]=folderPINs[contextItem.id]; saveData(); renderItems(currentFolder); };
+    document.getElementById("ctxCopyLink").onclick = () => navigator.clipboard.writeText(contextItem.link);
+    document.getElementById("ctxColor").onclick = () => document.getElementById("ctxColorInput").click();
+    document.getElementById("ctxColorInput").onchange = (e) => { if(contextItem){contextItem.color=e.target.value; saveData(); renderItems(currentFolder);} };
+    document.getElementById("ctxOpenAll").onclick = () => { const l = data.filter(i=>i.parent===contextItem.id && i.type==='link'); if(l.length>10 && !confirm(`Abrir ${l.length}?`)) return; l.forEach(x=>window.open(x.link,'_blank')); };
+    document.getElementById("ctxEdit").onclick = () => { if(contextItem.type==='folder' && folderPINs[contextItem.id] && prompt("PIN")!==folderPINs[contextItem.id]) return; openModal(contextItem.id); };
+    document.getElementById("ctxDelete").onclick = () => { const i=contextItem; if(i.type==='folder' && folderPINs[i.id] && prompt("PIN")!==folderPINs[i.id]) return; i.originalParent=i.parent; i.parent='trash'; i.deletedDate=Date.now(); saveData(); renderItems(currentFolder); };
+    document.getElementById("ctxRestore").onclick = () => { const i=contextItem; i.parent=i.originalParent||null; delete i.originalParent; delete i.deletedDate; saveData(); renderItems('trash'); };
+    document.getElementById("ctxPermDelete").onclick = () => { if(confirm("Borrar?")) { if(contextItem.type==='folder') deleteItemRecursively(contextItem.id); else data=data.filter(x=>x.id!==contextItem.id); saveData(); renderItems('trash'); } };
+    document.getElementById("ctxOpenTab").onclick = () => window.open(contextItem.link, '_blank');
+    document.getElementById("ctxOpenWin").onclick = () => window.open(contextItem.link, '_blank', 'width=800,height=600');
+    function deleteItemRecursively(id){ data.filter(i=>i.parent===id).forEach(k=>deleteItemRecursively(k.id)); data=data.filter(i=>i.id!==id); delete folderPINs[id]; }
+    document.getElementById("headerEmptyTrashBtn").onclick = () => { if(confirm("Borrar papelera?")) { data.filter(i=>i.parent==='trash').forEach(i=>{if(i.type==='folder')deleteItemRecursively(i.id);else data=data.filter(x=>x.id!==i.id);}); saveData(); renderItems('trash'); } };
+    document.getElementById("trashBtn").onclick = () => { currentFolder='trash'; renderItems('trash'); sideMenu.style.display="none"; overlay.style.display="none"; };
+    document.getElementById("exportBtn").onclick = () => { const b=new Blob([JSON.stringify({items:data, pins:folderPINs},null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download="backup.json"; a.click(); };
+    document.getElementById("ctxExport").onclick = () => { const f=contextItem; const it=[], pi={}; function col(pid){ data.filter(x=>x.parent===pid).forEach(c=>{it.push(c); if(folderPINs[c.id]) pi[c.id]=folderPINs[c.id]; if(c.type==='folder') col(c.id); }); } it.push(f); if(folderPINs[f.id]) pi[f.id]=folderPINs[f.id]; col(f.id); const b=new Blob([JSON.stringify({items:it, pins:pi},null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=`pack_${normalizeText(f.title)}.json`; a.click(); };
+    
+    // Check auto delete
+    const THIRTY = 30 * 24 * 60 * 60 * 1000; const now = Date.now(); let ch = false;
+    [...data].forEach(i => { if (i.parent === 'trash' && i.deletedDate && (now - i.deletedDate > THIRTY)) { if(i.type==='folder') deleteItemRecursively(i.id); else data=data.filter(x=>x.id!==i.id); ch = true; } });
+    if(ch) saveData();
+
+    // Ejecutar render inicial
+    renderItems();
+  </script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBuEYx4pTsnhRJE37mVX38jgBIi5GyZ4fQ",
+      authDomain: "organizador-a8fa1.firebaseapp.com",
+      projectId: "organizador-a8fa1",
+      storageBucket: "organizador-a8fa1.firebasestorage.app",
+      messagingSenderId: "813072238246",
+      appId: "1:813072238246:web:5866f2684bade15f319667"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const provider = new GoogleAuthProvider();
+
+    const btnLogin = document.getElementById("btnLogin");
+    const btnLogout = document.getElementById("btnLogout");
+    const userAvatar = document.getElementById("userAvatar");
+    const userName = document.getElementById("userName");
+
+    btnLogin.onclick = () => signInWithPopup(auth, provider).catch(e => console.error(e));
+    btnLogout.onclick = () => signOut(auth);
+
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            currentUser = user;
+            userName.textContent = user.displayName;
+            userAvatar.src = user.photoURL;
+            userAvatar.style.display = "block";
+            btnLogin.style.display = "none";
+            btnLogout.style.display = "flex";
+            
+            // Sobrescribir la función saveData para usar Firebase
+            window.saveData = async function() {
+                // Guardar Local
+                localStorage.setItem("linksData", JSON.stringify(data));
+                localStorage.setItem("folderPINs", JSON.stringify(folderPINs));
+                localStorage.setItem("bgConfig", JSON.stringify(bgConfig));
+                // Guardar Nube
+                try {
+                    await setDoc(doc(db, "users", user.uid), {
+                        linksData: JSON.stringify(data),
+                        folderPINs: JSON.stringify(folderPINs),
+                        bgConfig: JSON.stringify(bgConfig)
+                    });
+                } catch (e) { console.error("Error nube", e); }
+            };
+
+            // Cargar datos nube
+            try {
+                const docRef = doc(db, "users", user.uid);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    const cData = docSnap.data();
+                    if(cData.linksData) data = JSON.parse(cData.linksData);
+                    if(cData.folderPINs) folderPINs = JSON.parse(cData.folderPINs);
+                    if(cData.bgConfig) {
+                        bgConfig = JSON.parse(cData.bgConfig);
+                        checkBgMode();
+                    }
+                    renderItems(currentFolder);
+                }
+            } catch (e) {}
+
+        } else {
+            currentUser = null;
+            userName.textContent = "Sin Sesión";
+            userAvatar.style.display = "none";
+            btnLogin.style.display = "flex";
+            btnLogout.style.display = "none";
+            // Volver a función normal
+            window.saveData = function() {
+                localStorage.setItem("linksData", JSON.stringify(data));
+                localStorage.setItem("folderPINs", JSON.stringify(folderPINs));
+                localStorage.setItem("bgConfig", JSON.stringify(bgConfig));
+            }
+        }
+    });
+  </script>
+</body>
+</html>
