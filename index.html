@@ -122,14 +122,8 @@
     .editor-toolbar { display: flex; gap: 5px; background: #1e1e1e; padding: 5px 10px; border-bottom: 1px solid #333; }
     .tool-btn { background: transparent; border: none; color: #aaa; padding: 6px 10px; cursor: pointer; } .tool-btn:hover { color: white; background: #333; border-radius: 4px; }
 
-    /* FONDOS */
-    .bg-tabs { display: flex; gap: 5px; margin-bottom: 10px; }
-    .bg-tab { flex: 1; background: #252525; border: none; color: #aaa; padding: 8px; cursor: pointer; border-radius: 4px; }
-    .bg-tab.active { background: #0078d4; color: white; }
-    .bg-panel { display: none; flex-direction: column; gap: 10px; } .bg-panel.active { display: flex; }
-    .pc-options { display:flex; gap:10px; margin-bottom:10px; }
-    .pc-option-card { flex:1; background:#2a2a2a; padding:10px; border-radius:5px; text-align:center; cursor:pointer; border:1px solid #444; }
-    .pc-option-card:hover { background:#333; border-color:#0078d4; }
+    /* MODAL FONDO */
+    #bgModal .modal-content { width: 400px; }
   </style>
 </head>
 
@@ -194,38 +188,14 @@
   </div>
 
   <div class="modal" id="bgModal">
-    <div class="modal-content" style="width:400px;">
+    <div class="modal-content">
         <h3>Fondo de Pantalla</h3>
-        <div class="bg-tabs">
-            <button class="bg-tab active" id="tabBtn-local">PC</button>
-            <button class="bg-tab" id="tabBtn-url">Link</button>
-            <button class="bg-tab" id="tabBtn-random">Aleatorio</button>
+        <p style="font-size:13px; color:#aaa; margin-bottom:10px;">Pega un enlace para fondo fijo, o varios enlaces (uno por línea) para fondo aleatorio.</p>
+        <textarea id="bgUrlInput" rows="6" placeholder="https://ejemplo.com/fondo.jpg"></textarea>
+        <div class="modal-btn-group">
+            <button id="btnApplyBg" style="background:#0078d4;">Guardar</button>
+            <button id="btnCloseBg" style="background:#333;">Cerrar</button>
         </div>
-        <div id="tab-local" class="bg-panel active">
-            <div class="pc-options">
-                <div class="pc-option-card" id="optSingle"><i class="fa-regular fa-image"></i><br>Una Imagen</div>
-                <div class="pc-option-card" id="optMulti"><i class="fa-solid fa-images"></i><br>Aleatorio (Multi)</div>
-            </div>
-            <div id="pcSingle">
-                <p style="font-size:13px; color:#aaa;">Imagen estática:</p>
-                <input type="file" id="bgFileInput" accept="image/*">
-                <button id="btnApplyLocal" style="background:#0078d4; border:none; padding:10px; color:white; border-radius:5px; cursor:pointer; width:100%; margin-top:10px;">Aplicar</button>
-            </div>
-            <div id="pcMulti" style="display:none;">
-                <p style="font-size:13px; color:#aaa;">Selecciona varias imágenes.</p>
-                <input type="file" id="bgFilesMulti" accept="image/*" multiple>
-                <button id="btnApplyMulti" style="background:#0078d4; border:none; padding:10px; color:white; border-radius:5px; cursor:pointer; width:100%; margin-top:10px;">Guardar Lista</button>
-            </div>
-        </div>
-        <div id="tab-url" class="bg-panel">
-            <input type="url" id="bgUrlInput" placeholder="https://...">
-            <button id="btnApplyUrl" style="background:#0078d4; border:none; padding:10px; color:white; border-radius:5px; cursor:pointer; width:100%; margin-top:10px;">Aplicar</button>
-        </div>
-        <div id="tab-random" class="bg-panel">
-            <textarea id="bgRandomList" rows="5" placeholder="https://..."></textarea>
-            <button id="btnApplyRandom" style="background:#0078d4; border:none; padding:10px; color:white; border-radius:5px; cursor:pointer; width:100%; margin-top:10px;">Guardar</button>
-        </div>
-        <button id="btnCloseBg" style="background:#333; border:none; padding:10px; color:white; border-radius:5px; cursor:pointer; margin-top:10px;">Cerrar</button>
     </div>
   </div>
 
@@ -269,22 +239,21 @@
   </div>
 
   <script>
-    // Variables
-    let data = JSON.parse(localStorage.getItem("linksData")) || [];
-    let folderPINs = JSON.parse(localStorage.getItem("folderPINs")) || {};
-    let bgConfig = JSON.parse(localStorage.getItem("bgConfig")) || { mode: 'url', value: '' };
-    let viewMode = localStorage.getItem("viewMode") || 'grid';
+    // --- VARIABLES GLOBALES (Window) ---
+    window.data = JSON.parse(localStorage.getItem("linksData")) || [];
+    window.folderPINs = JSON.parse(localStorage.getItem("folderPINs")) || {};
+    window.bgConfig = JSON.parse(localStorage.getItem("bgConfig")) || []; // Array de URLs
+    window.viewMode = localStorage.getItem("viewMode") || 'grid';
     
-    let currentFolder = null;
-    let folderHistory = [];
-    let editItemId = null;
-    let currentType = "folder";
-    let dragSrcId = null;
-    let contextItem = null;
-    let dbLocal = null;
-    let currentUser = null;
+    window.currentFolder = null;
+    window.folderHistory = [];
+    window.editItemId = null;
+    window.currentType = "folder";
+    window.dragSrcId = null;
+    window.contextItem = null;
+    window.currentUser = null;
 
-    // Referencias
+    // Referencias UI
     const container = document.getElementById("container");
     const searchBottom = document.getElementById("searchBottom");
     const backBtn = document.getElementById("backBtn");
@@ -297,45 +266,49 @@
     const toggleViewBtn = document.getElementById("toggleViewBtn");
 
     // Funciones Utiles
-    const normalizeText = (t) => t ? t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : "";
-    const getRandomColor = () => { const l="0123456789ABCDEF"; let c="#"; for(let i=0;i<6;i++) c+=l[Math.floor(Math.random()*16)]; return c; };
+    window.normalizeText = (t) => t ? t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : "";
+    window.getRandomColor = () => { const l="0123456789ABCDEF"; let c="#"; for(let i=0;i<6;i++) c+=l[Math.floor(Math.random()*16)]; return c; };
 
-    // IndexedDB
-    const req = indexedDB.open("WallpaperDB", 1);
-    req.onupgradeneeded = e => { const d = e.target.result; if(!d.objectStoreNames.contains("wallpapers")) d.createObjectStore("wallpapers", { autoIncrement: true }); };
-    req.onsuccess = e => { dbLocal = e.target.result; checkBgMode(); };
+    // Background logic
+    window.applyBackground = function() {
+        const conf = window.bgConfig;
+        if(!conf || conf.length === 0) return;
+        const url = conf.length === 1 ? conf[0] : conf[Math.floor(Math.random() * conf.length)];
+        document.body.style.backgroundImage = `url('${url}')`;
+    }
+    applyBackground();
 
     // Renderizado
-    function renderItems(folderId = null) {
+    window.renderItems = function(folderId = null) {
         container.innerHTML = "";
         const isTrash = folderId === 'trash';
-        const trashCount = data.filter(i => i.parent === 'trash').length;
+        const trashCount = window.data.filter(i => i.parent === 'trash').length;
         
         headerEmpty.style.display = (isTrash && trashCount > 0) ? 'block' : 'none';
         if (folderId) backBtn.style.display = "block"; else backBtn.style.display = "none";
         
-        // APLICAR MODO VISTA
-        if(viewMode === 'list') container.classList.add('list-mode');
+        // MODO VISTA
+        if(window.viewMode === 'list') container.classList.add('list-mode');
         else container.classList.remove('list-mode');
         
-        toggleViewBtn.innerHTML = viewMode === 'grid' ? '<i class="fa-solid fa-list"></i> Cambiar a Lista' : '<i class="fa-solid fa-border-all"></i> Cambiar a Cuadrícula';
+        toggleViewBtn.innerHTML = window.viewMode === 'grid' ? '<i class="fa-solid fa-list"></i> Cambiar a Lista' : '<i class="fa-solid fa-border-all"></i> Cambiar a Cuadrícula';
 
         backBtn.onclick = () => { 
-            if(isTrash) { currentFolder = null; renderItems(); }
-            else if(folderHistory.length > 0) { currentFolder = folderHistory.pop(); renderItems(currentFolder); } 
-            else { currentFolder = null; renderItems(); }
+            if(isTrash) { window.currentFolder = null; renderItems(); }
+            else if(window.folderHistory.length > 0) { window.currentFolder = window.folderHistory.pop(); renderItems(window.currentFolder); } 
+            else { window.currentFolder = null; renderItems(); }
         };
 
-        let items = data.filter(i => i.parent === folderId);
+        let items = window.data.filter(i => i.parent === folderId);
         const search = normalizeText(searchBottom.value);
-        if (search && !isTrash) items = data.filter(i => i.parent!=='trash' && (normalizeText(i.title).includes(search) || (i.type==='link' && normalizeText(i.link).includes(search))));
+        if (search && !isTrash) items = window.data.filter(i => i.parent!=='trash' && (normalizeText(i.title).includes(search) || (i.type==='link' && normalizeText(i.link).includes(search))));
 
         if (items.length === 0) container.innerHTML = `<div style="width:100%;text-align:center;color:#777;margin-top:50px;font-size:18px;">${isTrash?'Papelera vacía':'Carpeta vacía'}</div>`;
 
         items.forEach(item => {
             const div = document.createElement("div"); 
             div.className = "item";
-            if(viewMode === 'list') div.classList.add('list-view');
+            if(window.viewMode === 'list') div.classList.add('list-view');
 
             if(!search) {
                 div.draggable = true;
@@ -350,7 +323,7 @@
             div.addEventListener('contextmenu', (e) => showContextMenu(e, item));
 
             const iconBox = document.createElement("div"); iconBox.className = "icon-box";
-            if(item.type==='folder') iconBox.innerHTML = `<i class="fa-solid ${data.some(x=>x.parent===item.id)?'fa-folder-open':'fa-folder'}" style="color:${item.color||'#FFD700'}"></i>`;
+            if(item.type==='folder') iconBox.innerHTML = `<i class="fa-solid ${window.data.some(x=>x.parent===item.id)?'fa-folder-open':'fa-folder'}" style="color:${item.color||'#FFD700'}"></i>`;
             else if(item.type==='note') iconBox.innerHTML = `<i class="fa-solid fa-file-lines" style="color:${item.color||'#4caf50'}"></i>`;
             else {
                 const img = document.createElement("img"); img.src = `https://www.google.com/s2/favicons?sz=128&domain_url=${item.link}`;
@@ -376,10 +349,10 @@
 
     // Toggle View Logic
     toggleViewBtn.onclick = () => {
-        viewMode = viewMode === 'grid' ? 'list' : 'grid';
-        localStorage.setItem("viewMode", viewMode);
+        window.viewMode = window.viewMode === 'grid' ? 'list' : 'grid';
+        localStorage.setItem("viewMode", window.viewMode);
         saveData();
-        renderItems(currentFolder);
+        renderItems(window.currentFolder);
     };
 
     // Event Listeners BASICOS
@@ -422,71 +395,53 @@
     }
     document.addEventListener('click', () => contextMenu.style.display="none");
 
-    // Save Data
+    // Save Data (Local fallback)
     window.saveData = function() {
-        localStorage.setItem("linksData", JSON.stringify(data));
-        localStorage.setItem("folderPINs", JSON.stringify(folderPINs));
-        localStorage.setItem("bgConfig", JSON.stringify(bgConfig));
-        localStorage.setItem("viewMode", viewMode);
+        localStorage.setItem("linksData", JSON.stringify(window.data));
+        localStorage.setItem("folderPINs", JSON.stringify(window.folderPINs));
+        localStorage.setItem("bgConfig", JSON.stringify(window.bgConfig));
+        localStorage.setItem("viewMode", window.viewMode);
     }
 
     // Items Logic
-    function enterFolder(item) {
-        if(folderPINs[item.id] && prompt("PIN")!==folderPINs[item.id]) return;
-        // Limpiar buscador al entrar
-        document.getElementById("searchBottom").value = "";
-        folderHistory.push(currentFolder); currentFolder=item.id; renderItems(item.id);
+    window.enterFolder = function(item) {
+        if(window.folderPINs[item.id] && prompt("PIN")!==window.folderPINs[item.id]) return;
+        document.getElementById("searchBottom").value = ""; // CLEAN SEARCH
+        window.folderHistory.push(window.currentFolder); window.currentFolder=item.id; renderItems(item.id);
     }
     
     // Drag Drop
-    function handleDragStart(e) { this.classList.add('dragging'); dragSrcId = parseInt(this.dataset.id); e.dataTransfer.effectAllowed = 'move'; };
-    function handleDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; return false; };
-    function handleDragEnter(e) {
-        const tid = parseInt(this.dataset.id); const t = data.find(i=>i.id===tid);
-        if(t && t.type==='folder' && dragSrcId!==tid) this.classList.add('drag-over-folder');
+    window.handleDragStart = function(e) { this.classList.add('dragging'); window.dragSrcId = parseInt(this.dataset.id); e.dataTransfer.effectAllowed = 'move'; };
+    window.handleDragOver = function(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; return false; };
+    window.handleDragEnter = function(e) {
+        const tid = parseInt(this.dataset.id); const t = window.data.find(i=>i.id===tid);
+        if(t && t.type==='folder' && window.dragSrcId!==tid) this.classList.add('drag-over-folder');
         else this.classList.add('drag-over-swap');
     };
-    function handleDragLeave(e) { this.classList.remove('drag-over-folder'); this.classList.remove('drag-over-swap'); };
-    function handleDrop(e) {
+    window.handleDragLeave = function(e) { this.classList.remove('drag-over-folder'); this.classList.remove('drag-over-swap'); };
+    window.handleDrop = function(e) {
         e.stopPropagation(); const did = parseInt(this.dataset.id);
-        const t = data.find(i=>i.id===did); const s = data.find(i=>i.id===dragSrcId);
-        if(dragSrcId !== did) {
+        const t = window.data.find(i=>i.id===did); const s = window.data.find(i=>i.id===window.dragSrcId);
+        if(window.dragSrcId !== did) {
             if(t.type==='folder' && s.id!==t.id) {
                 let curr = t; let safe = true;
-                while(curr && curr.parent) { if(curr.parent===s.id) safe=false; curr = data.find(x=>x.id===curr.parent); }
+                while(curr && curr.parent) { if(curr.parent===s.id) safe=false; curr = window.data.find(x=>x.id===curr.parent); }
                 if(!safe) alert("No mover carpeta dentro de si misma");
-                else if(confirm(`Mover a ${t.title}?`)) { s.parent=t.id; saveData(); renderItems(currentFolder); }
+                else if(confirm(`Mover a ${t.title}?`)) { s.parent=t.id; saveData(); renderItems(window.currentFolder); }
             } else {
-                const si = data.findIndex(x=>x.id===dragSrcId);
-                const ti = data.findIndex(x=>x.id===did);
-                const [mov] = data.splice(si, 1);
-                data.splice(data.findIndex(x=>x.id===did), 0, mov);
-                saveData(); renderItems(currentFolder);
+                const si = window.data.findIndex(x=>x.id===window.dragSrcId);
+                const ti = window.data.findIndex(x=>x.id===did);
+                const [mov] = window.data.splice(si, 1);
+                window.data.splice(window.data.findIndex(x=>x.id===did), 0, mov);
+                saveData(); renderItems(window.currentFolder);
             }
         }
         return false;
     };
-    function handleDragEnd(e) { this.classList.remove('dragging'); document.querySelectorAll('.item').forEach(i=>{i.classList.remove('drag-over-folder');i.classList.remove('drag-over-swap');}); };
-
-    // Background
-    function checkBgMode() { if(bgConfig) applyBackground(bgConfig); }
-    function applyBackground(c) {
-        if(!c) return; let u = '';
-        if(c.mode==='local'||c.mode==='url') u=c.value;
-        else if(c.mode==='random' && Array.isArray(c.value)) u=c.value[Math.floor(Math.random()*c.value.length)];
-        else if(c.mode==='local-multi' && dbLocal) {
-            const tx = dbLocal.transaction("wallpapers","readonly");
-            tx.objectStore("wallpapers").getAll().onsuccess = e => {
-                const f = e.target.result;
-                if(f.length) document.body.style.backgroundImage = `url('${URL.createObjectURL(f[Math.floor(Math.random()*f.length)])}')`;
-            };
-            return;
-        }
-        if(u) document.body.style.backgroundImage = `url('${u}')`;
-    }
+    window.handleDragEnd = function(e) { this.classList.remove('dragging'); document.querySelectorAll('.item').forEach(i=>{i.classList.remove('drag-over-folder');i.classList.remove('drag-over-swap');}); };
 
     // Inicializar vista
-    searchBottom.addEventListener("input", () => renderItems(currentFolder));
+    searchBottom.addEventListener("input", () => renderItems(window.currentFolder));
     setInterval(()=>document.getElementById("clock").textContent=new Date().toLocaleTimeString(),1000);
     
     // Botones Modal UI
@@ -501,11 +456,11 @@
         document.getElementById("modalTitle").textContent = id ? "Editar" : "Agregar";
         document.getElementById("itemTitle").value = ""; document.getElementById("itemLink").value=""; document.getElementById("itemPIN").value="";
         if (id) {
-            const i = data.find(x => x.id === id); currentType = i.type;
+            const i = window.data.find(x => x.id === id); currentType = i.type;
             document.getElementById("itemTitle").value = i.title;
             if(i.type==='link') document.getElementById("itemLink").value = i.link;
             if(i.type==='folder' || i.type==='note') { document.getElementById("itemColor").value = i.color || "#FFD700"; }
-            if(i.type==='folder') document.getElementById("itemPIN").value = folderPINs[i.id]||"";
+            if(i.type==='folder') document.getElementById("itemPIN").value = window.folderPINs[i.id]||"";
         } else {
             currentType = type || "folder";
             document.getElementById("itemColor").value = (currentType==="folder" || currentType==="note") ? getRandomColor() : "#FFD700";
@@ -518,7 +473,12 @@
 
     // ENTER KEY SUPPORT FOR FORMS
     document.querySelectorAll(".enter-save").forEach(i => i.addEventListener("keydown", e => { if(e.key==="Enter") saveModalItem(); }));
-    document.getElementById("bgUrlInput").addEventListener("keydown", e => { if(e.key==="Enter") document.getElementById("btnApplyUrl").click(); });
+    document.getElementById("bgUrlInput").addEventListener("keydown", e => {
+        if(e.key==="Enter" && !e.shiftKey) { // Enter para guardar sin salto de linea
+            e.preventDefault(); 
+            document.getElementById("btnApplyBg").click(); 
+        }
+    });
     document.getElementById("linkName").addEventListener("keydown", e => { if(e.key==="Enter") document.getElementById("saveLinkBtn").click(); });
     document.getElementById("linkURL").addEventListener("keydown", e => { if(e.key==="Enter") document.getElementById("saveLinkBtn").click(); });
 
@@ -527,17 +487,17 @@
         if(!title) return;
         if(currentType === 'link') {
             const link = document.getElementById("itemLink").value.trim(); if(!link) return;
-            if(editItemId) { const i = data.find(x=>x.id===editItemId); i.title=title; i.link=link; }
-            else data.push({id:Date.now(), type:'link', title, link, parent:currentFolder});
+            if(editItemId) { const i = window.data.find(x=>x.id===editItemId); i.title=title; i.link=link; }
+            else window.data.push({id:Date.now(), type:'link', title, link, parent:currentFolder});
         } else if(currentType === 'folder' || currentType === 'note') {
             const color = document.getElementById("itemColor").value;
             if (currentType === 'folder') {
                 const pin = document.getElementById("itemPIN").value.trim();
-                if(editItemId) { const i = data.find(x=>x.id===editItemId); i.title=title; i.color=color; if(pin) folderPINs[i.id]=pin; else delete folderPINs[i.id]; }
-                else { const id = Date.now(); data.push({id, type:'folder', title, color, parent:currentFolder}); if(pin) folderPINs[id]=pin; }
+                if(editItemId) { const i = window.data.find(x=>x.id===editItemId); i.title=title; i.color=color; if(pin) window.folderPINs[i.id]=pin; else delete window.folderPINs[i.id]; }
+                else { const id = Date.now(); window.data.push({id, type:'folder', title, color, parent:currentFolder}); if(pin) window.folderPINs[id]=pin; }
             } else {
-                if(editItemId) { const i = data.find(x=>x.id===editItemId); i.title=title; i.color=color; }
-                else { data.push({id:Date.now(), type:'note', title, content:"", color: color, parent:currentFolder}); }
+                if(editItemId) { const i = window.data.find(x=>x.id===editItemId); i.title=title; i.color=color; }
+                else { window.data.push({id:Date.now(), type:'note', title, content:"", color: color, parent:currentFolder}); }
             }
         }
         saveData(); renderItems(currentFolder); document.getElementById("modal").style.display="none";
@@ -546,58 +506,35 @@
     // Listeners Fondo UI
     document.getElementById("changeBgBtn").onclick = () => {
         document.getElementById('bgModal').style.display = 'flex';
-        if(bgConfig.mode === 'random') document.getElementById('bgRandomList').value = Array.isArray(bgConfig.value) ? bgConfig.value.join('\n') : '';
-        else if (bgConfig.mode === 'url') document.getElementById('bgUrlInput').value = bgConfig.value;
-        switchBgTab(bgConfig.mode === 'local-multi' ? 'local' : (bgConfig.mode || 'local'));
+        document.getElementById('bgUrlInput').value = window.bgConfig.join('\n');
     };
-    function switchBgTab(t) {
-        document.querySelectorAll('.bg-tab').forEach(b=>b.classList.remove('active'));
-        document.querySelectorAll('.bg-panel').forEach(p=>p.classList.remove('active'));
-        document.getElementById(`tabBtn-${t}`).classList.add('active');
-        document.getElementById(`tab-${t}`).classList.add('active');
-    }
-    document.getElementById("tabBtn-local").onclick = () => switchBgTab('local');
-    document.getElementById("tabBtn-url").onclick = () => switchBgTab('url');
-    document.getElementById("tabBtn-random").onclick = () => switchBgTab('random');
-    document.getElementById("optSingle").onclick = () => { document.getElementById('pcSingle').style.display='block'; document.getElementById('pcMulti').style.display='none'; };
-    document.getElementById("optMulti").onclick = () => { document.getElementById('pcSingle').style.display='none'; document.getElementById('pcMulti').style.display='block'; };
-    document.getElementById("btnApplyLocal").onclick = () => {
-        const f=document.getElementById('bgFileInput').files[0]; if(!f)return;
-        const r=new FileReader(); r.onload=e=>{ bgConfig={mode:'local',value:e.target.result}; saveData(); checkBgMode(); document.getElementById('bgModal').style.display='none'; };
-        r.readAsDataURL(f);
+    document.getElementById("btnApplyBg").onclick = () => {
+        const val = document.getElementById('bgUrlInput').value.trim();
+        window.bgConfig = val.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        saveData(); applyBackground(); document.getElementById('bgModal').style.display = 'none';
     };
-    document.getElementById("btnApplyMulti").onclick = () => {
-        const fs=document.getElementById('bgFilesMulti').files; if(!fs.length)return;
-        const tx=dbLocal.transaction("wallpapers","readwrite"); tx.objectStore("wallpapers").clear().onsuccess=()=>{
-            for(let f of fs) tx.objectStore("wallpapers").add(f);
-            bgConfig={mode:'local-multi',value:''}; saveData(); checkBgMode(); document.getElementById('bgModal').style.display='none';
-        };
-    };
-    document.getElementById("btnApplyUrl").onclick = () => { const v=document.getElementById('bgUrlInput').value; if(!v)return; bgConfig={mode:'url',value:v}; saveData(); checkBgMode(); document.getElementById('bgModal').style.display='none'; };
-    document.getElementById("btnApplyRandom").onclick = () => { const v=document.getElementById('bgRandomList').value; if(!v)return; bgConfig={mode:'random',value:v.split('\n').map(x=>x.trim()).filter(x=>x)}; saveData(); checkBgMode(); document.getElementById('bgModal').style.display='none'; };
     document.getElementById("btnCloseBg").onclick = () => document.getElementById('bgModal').style.display='none';
 
     // Context Actions
-    document.getElementById("ctxDuplicate").onclick = () => { const n=JSON.parse(JSON.stringify(contextItem)); n.id=Date.now(); n.title+=" (Copia)"; data.push(n); if(folderPINs[contextItem.id]) folderPINs[n.id]=folderPINs[contextItem.id]; saveData(); renderItems(currentFolder); };
+    document.getElementById("ctxDuplicate").onclick = () => { const n=JSON.parse(JSON.stringify(contextItem)); n.id=Date.now(); n.title+=" (Copia)"; window.data.push(n); if(window.folderPINs[contextItem.id]) window.folderPINs[n.id]=window.folderPINs[contextItem.id]; saveData(); renderItems(currentFolder); };
     document.getElementById("ctxCopyLink").onclick = () => navigator.clipboard.writeText(contextItem.link);
     document.getElementById("ctxColor").onclick = () => document.getElementById("ctxColorInput").click();
     document.getElementById("ctxColorInput").onchange = (e) => { if(contextItem){contextItem.color=e.target.value; saveData(); renderItems(currentFolder);} };
-    document.getElementById("ctxOpenAll").onclick = () => { const l = data.filter(i=>i.parent===contextItem.id && i.type==='link'); if(l.length>10 && !confirm(`Abrir ${l.length}?`)) return; l.forEach(x=>window.open(x.link,'_blank')); };
-    document.getElementById("ctxEdit").onclick = () => { if(contextItem.type==='folder' && folderPINs[contextItem.id] && prompt("PIN")!==folderPINs[contextItem.id]) return; openModal(contextItem.id); };
-    document.getElementById("ctxDelete").onclick = () => { const i=contextItem; if(i.type==='folder' && folderPINs[i.id] && prompt("PIN")!==folderPINs[i.id]) return; i.originalParent=i.parent; i.parent='trash'; i.deletedDate=Date.now(); saveData(); renderItems(currentFolder); };
+    document.getElementById("ctxOpenAll").onclick = () => { const l = window.data.filter(i=>i.parent===contextItem.id && i.type==='link'); if(l.length>10 && !confirm(`Abrir ${l.length}?`)) return; l.forEach(x=>window.open(x.link,'_blank')); };
+    document.getElementById("ctxEdit").onclick = () => { if(contextItem.type==='folder' && window.folderPINs[contextItem.id] && prompt("PIN")!==window.folderPINs[contextItem.id]) return; openModal(contextItem.id); };
+    document.getElementById("ctxDelete").onclick = () => { const i=contextItem; if(i.type==='folder' && window.folderPINs[i.id] && prompt("PIN")!==window.folderPINs[i.id]) return; i.originalParent=i.parent; i.parent='trash'; i.deletedDate=Date.now(); saveData(); renderItems(currentFolder); };
     document.getElementById("ctxRestore").onclick = () => { const i=contextItem; i.parent=i.originalParent||null; delete i.originalParent; delete i.deletedDate; saveData(); renderItems('trash'); };
-    document.getElementById("ctxPermDelete").onclick = () => { if(confirm("Borrar?")) { if(contextItem.type==='folder') deleteItemRecursively(contextItem.id); else data=data.filter(x=>x.id!==contextItem.id); saveData(); renderItems('trash'); } };
+    document.getElementById("ctxPermDelete").onclick = () => { if(confirm("Borrar?")) { if(contextItem.type==='folder') deleteItemRecursively(contextItem.id); else window.data=window.data.filter(x=>x.id!==contextItem.id); saveData(); renderItems('trash'); } };
     document.getElementById("ctxOpenTab").onclick = () => window.open(contextItem.link, '_blank');
     document.getElementById("ctxOpenWin").onclick = () => window.open(contextItem.link, '_blank', 'width=800,height=600');
-    function deleteItemRecursively(id){ data.filter(i=>i.parent===id).forEach(k=>deleteItemRecursively(k.id)); data=data.filter(i=>i.id!==id); delete folderPINs[id]; }
-    document.getElementById("headerEmptyTrashBtn").onclick = () => { if(confirm("Borrar papelera?")) { data.filter(i=>i.parent==='trash').forEach(i=>{if(i.type==='folder')deleteItemRecursively(i.id);else data=data.filter(x=>x.id!==i.id);}); saveData(); renderItems('trash'); } };
+    function deleteItemRecursively(id){ window.data.filter(i=>i.parent===id).forEach(k=>deleteItemRecursively(k.id)); window.data=window.data.filter(i=>i.id!==id); delete window.folderPINs[id]; }
+    document.getElementById("headerEmptyTrashBtn").onclick = () => { if(confirm("Borrar papelera?")) { window.data.filter(i=>i.parent==='trash').forEach(i=>{if(i.type==='folder')deleteItemRecursively(i.id);else window.data=window.data.filter(x=>x.id!==i.id);}); saveData(); renderItems('trash'); } };
     document.getElementById("trashBtn").onclick = () => { currentFolder='trash'; renderItems('trash'); sideMenu.style.display="none"; overlay.style.display="none"; };
-    document.getElementById("ctxExport").onclick = () => { const f=contextItem; const it=[], pi={}; function col(pid){ data.filter(x=>x.parent===pid).forEach(c=>{it.push(c); if(folderPINs[c.id]) pi[c.id]=folderPINs[c.id]; if(c.type==='folder') col(c.id); }); } it.push(f); if(folderPINs[f.id]) pi[f.id]=folderPINs[f.id]; col(f.id); const b=new Blob([JSON.stringify({items:it, pins:pi},null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=`pack_${normalizeText(f.title)}.json`; a.click(); };
     
     // EDITOR DE NOTAS
     const editor = document.getElementById("editor"); let isEditing = false; let currentNoteId = null;
-    function openNoteEditor(id) {
-        currentNoteId = id; const n = data.find(x=>x.id===id); if(!n) return;
+    window.openNoteEditor = function(id) {
+        currentNoteId = id; const n = window.data.find(x=>x.id===id); if(!n) return;
         editor.innerHTML = n.content || ""; document.getElementById("noteEditorTitle").textContent = n.title;
         isEditing=false; editor.contentEditable=false; 
         document.getElementById("modeToggle").textContent="Editar"; document.getElementById("modeToggle").style.background="#0078d4";
@@ -606,10 +543,10 @@
     document.getElementById("modeToggle").onclick = () => {
         isEditing = !isEditing; editor.contentEditable = isEditing;
         if(isEditing) { editor.focus(); document.getElementById("modeToggle").textContent="Guardar"; document.getElementById("modeToggle").style.background="#4caf50"; document.getElementById("editToolbar").style.display="flex"; } 
-        else { const n = data.find(x=>x.id===currentNoteId); if(n){ n.content=editor.innerHTML; saveData(); } document.getElementById("modeToggle").textContent="Editar"; document.getElementById("modeToggle").style.background="#0078d4"; document.getElementById("editToolbar").style.display="none"; enableEditorLinks(); }
+        else { const n = window.data.find(x=>x.id===currentNoteId); if(n){ n.content=editor.innerHTML; saveData(); } document.getElementById("modeToggle").textContent="Editar"; document.getElementById("modeToggle").style.background="#0078d4"; document.getElementById("editToolbar").style.display="none"; enableEditorLinks(); }
     };
     function enableEditorLinks(){ editor.querySelectorAll("a").forEach(a=>a.onclick=e=>{if(!isEditing){e.preventDefault();window.open(a.href,"_blank")}}); }
-    document.getElementById("closeEditorBtn").onclick = () => { if(isEditing) { const n = data.find(x=>x.id===currentNoteId); if(n) { n.content=editor.innerHTML; saveData(); }} document.getElementById("noteEditorModal").style.display="none"; };
+    document.getElementById("closeEditorBtn").onclick = () => { if(isEditing) { const n = window.data.find(x=>x.id===currentNoteId); if(n) { n.content=editor.innerHTML; saveData(); }} document.getElementById("noteEditorModal").style.display="none"; };
     const insert = n => { editor.focus(); const s=window.getSelection(); if(s.rangeCount){ const r=s.getRangeAt(0); r.deleteContents(); r.insertNode(n); r.setStartAfter(n); s.removeAllRanges(); s.addRange(r); } else editor.appendChild(n); };
     document.getElementById("addImageToNoteBtn").onclick=()=>{ const u=prompt("URL Imagen:"); if(u){ const i=document.createElement("img"); i.src=u; insert(i); } };
     document.getElementById("addDateBtn").onclick=()=>{ const s=document.createElement("span"); s.style.fontSize="12px"; s.style.color="#888"; s.textContent=` [${new Date().toLocaleString()}] `; insert(s); };
@@ -619,10 +556,9 @@
 
     // Check auto delete
     const THIRTY = 30 * 24 * 60 * 60 * 1000; const now = Date.now(); let ch = false;
-    [...data].forEach(i => { if (i.parent === 'trash' && i.deletedDate && (now - i.deletedDate > THIRTY)) { if(i.type==='folder') deleteItemRecursively(i.id); else data=data.filter(x=>x.id!==i.id); ch = true; } });
+    [...window.data].forEach(i => { if (i.parent === 'trash' && i.deletedDate && (now - i.deletedDate > THIRTY)) { if(i.type==='folder') deleteItemRecursively(i.id); else window.data=window.data.filter(x=>x.id!==i.id); ch = true; } });
     if(ch) saveData();
 
-    // Ejecutar render inicial
     renderItems();
   </script>
 
@@ -655,7 +591,7 @@
 
     onAuthStateChanged(auth, async (user) => {
         if (user) {
-            currentUser = user;
+            window.currentUser = user;
             userName.textContent = user.displayName;
             userAvatar.src = user.photoURL;
             userAvatar.style.display = "block";
@@ -663,16 +599,16 @@
             btnLogout.style.display = "flex";
             
             window.saveData = async function() {
-                localStorage.setItem("linksData", JSON.stringify(data));
-                localStorage.setItem("folderPINs", JSON.stringify(folderPINs));
-                localStorage.setItem("bgConfig", JSON.stringify(bgConfig));
-                localStorage.setItem("viewMode", viewMode);
+                localStorage.setItem("linksData", JSON.stringify(window.data));
+                localStorage.setItem("folderPINs", JSON.stringify(window.folderPINs));
+                localStorage.setItem("bgConfig", JSON.stringify(window.bgConfig));
+                localStorage.setItem("viewMode", window.viewMode);
                 try {
                     await setDoc(doc(db, "users", user.uid), {
-                        linksData: JSON.stringify(data),
-                        folderPINs: JSON.stringify(folderPINs),
-                        bgConfig: JSON.stringify(bgConfig),
-                        viewMode: viewMode
+                        linksData: JSON.stringify(window.data),
+                        folderPINs: JSON.stringify(window.folderPINs),
+                        bgConfig: JSON.stringify(window.bgConfig),
+                        viewMode: window.viewMode
                     });
                 } catch (e) { console.error("Error nube", e); }
             };
@@ -682,25 +618,25 @@
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
                     const cData = docSnap.data();
-                    if(cData.linksData) data = JSON.parse(cData.linksData);
-                    if(cData.folderPINs) folderPINs = JSON.parse(cData.folderPINs);
-                    if(cData.bgConfig) { bgConfig = JSON.parse(cData.bgConfig); checkBgMode(); }
-                    if(cData.viewMode) viewMode = cData.viewMode;
-                    renderItems(currentFolder);
+                    if(cData.linksData) window.data = JSON.parse(cData.linksData);
+                    if(cData.folderPINs) window.folderPINs = JSON.parse(cData.folderPINs);
+                    if(cData.bgConfig) { window.bgConfig = JSON.parse(cData.bgConfig); window.applyBackground(); }
+                    if(cData.viewMode) window.viewMode = cData.viewMode;
+                    window.renderItems(window.currentFolder);
                 }
             } catch (e) {}
 
         } else {
-            currentUser = null;
+            window.currentUser = null;
             userName.textContent = "Sin Sesión";
             userAvatar.style.display = "none";
             btnLogin.style.display = "flex";
             btnLogout.style.display = "none";
             window.saveData = function() {
-                localStorage.setItem("linksData", JSON.stringify(data));
-                localStorage.setItem("folderPINs", JSON.stringify(folderPINs));
-                localStorage.setItem("bgConfig", JSON.stringify(bgConfig));
-                localStorage.setItem("viewMode", viewMode);
+                localStorage.setItem("linksData", JSON.stringify(window.data));
+                localStorage.setItem("folderPINs", JSON.stringify(window.folderPINs));
+                localStorage.setItem("bgConfig", JSON.stringify(window.bgConfig));
+                localStorage.setItem("viewMode", window.viewMode);
             }
         }
     });
