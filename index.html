@@ -60,10 +60,18 @@
     }
     .menu-btn:hover { background: rgba(255,255,255,0.15); border-color: #0078d4; transform: translateX(5px); }
 
-    /* SALUDO Y BREADCRUMBS */
+    /* HEADER AREA */
     .header-area {
         margin-top: 20px; padding: 0 20px;
         display: flex; flex-direction: column; gap: 10px;
+        pointer-events: none; /* Click through empty space */
+    }
+    
+    /* SALUDO FADE */
+    #greetingContainer {
+        transition: opacity 1.5s ease-out;
+        opacity: 1;
+        pointer-events: none;
     }
     #greetingBox {
         font-size: 24px; font-weight: 300; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.5);
@@ -72,9 +80,10 @@
         font-size: 14px; font-style: italic; color: #aaa; margin-top: -5px; margin-bottom: 10px;
     }
 
-    .nav-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+    .nav-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; pointer-events: auto; }
     #breadcrumbs {
-        display: flex; align-items: center; gap: 8px; background: rgba(30,30,30,0.6);
+        display: none; /* Oculto por defecto si está vacío */
+        align-items: center; gap: 8px; background: rgba(30,30,30,0.6);
         padding: 5px 15px; border-radius: 20px; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.1);
         font-size: 14px; color: #ddd;
     }
@@ -162,8 +171,11 @@
   <div class="bg-overlay"></div>
   
   <div class="header-area">
-      <div id="greetingBox"></div>
-      <div id="quoteBox"></div>
+      <div id="greetingContainer" style="display:none;">
+          <div id="greetingBox"></div>
+          <div id="quoteBox"></div>
+      </div>
+
       <div class="nav-bar">
           <button id="backBtn"><i class="fa-solid fa-arrow-left"></i></button>
           <div id="breadcrumbs"></div> <button id="headerEmptyTrashBtn"><i class="fa-solid fa-fire"></i> Vaciar Papelera</button>
@@ -365,10 +377,9 @@
         renderItems();
         updateClock();
         fetchWeather();
-        setGreeting();
+        checkGreetingDisplay(); // Comprobar si mostrar saludo
         applyBackground();
         setInterval(updateClock, 1000);
-        setInterval(setGreeting, 60000); // Actualizar saludo cada minuto
         
         // Auto newline en background
         document.getElementById("bgUrlInput").addEventListener('input', function(e) {
@@ -382,19 +393,42 @@
         document.addEventListener('keydown', handleShortcuts);
     }
 
-    // --- SALUDO Y CLIMA ---
-    function setGreeting() {
-        const hour = new Date().getHours();
+    // --- LOGICA DE SALUDO (UNA VEZ POR TURNO) ---
+    function checkGreetingDisplay() {
+        const now = new Date();
+        const hour = now.getHours();
+        const dateStr = now.toLocaleDateString(); // "26/11/2025"
+        
+        // Definir turno
+        let period = "Noche";
         let greet = "Buenas noches";
-        if(hour >= 6 && hour < 12) greet = "Buenos días";
-        else if(hour >= 12 && hour < 20) greet = "Buenas tardes";
-        
-        const name = window.currentUser ? window.currentUser.displayName.split(" ")[0] : "Usuario";
-        document.getElementById("greetingBox").textContent = `${greet}, ${name}.`;
-        
-        // Frase aleatoria si no hay una
-        if(!document.getElementById("quoteBox").textContent) {
+        if(hour >= 6 && hour < 12) { period = "Mañana"; greet = "Buenos días"; }
+        else if(hour >= 12 && hour < 20) { period = "Tarde"; greet = "Buenas tardes"; }
+
+        // Crear llave única para hoy+turno
+        const storageKey = `seen_${dateStr}_${period}`;
+        const hasSeen = localStorage.getItem(storageKey);
+        const container = document.getElementById("greetingContainer");
+
+        if(!hasSeen) {
+            // MOSTRAR
+            const name = window.currentUser ? window.currentUser.displayName.split(" ")[0] : "Usuario";
+            document.getElementById("greetingBox").textContent = `${greet}, ${name}.`;
             document.getElementById("quoteBox").textContent = quotes[Math.floor(Math.random() * quotes.length)];
+            
+            container.style.display = "block";
+            // Wait slight delay to render block then opacity
+            setTimeout(() => {
+                // Iniciar fade out despues de 4 segundos
+                container.style.opacity = "0";
+                setTimeout(() => {
+                    container.style.display = "none";
+                    localStorage.setItem(storageKey, "true"); // Guardar que ya se vió
+                }, 1500); // Tiempo de la transición CSS
+            }, 4000); // Tiempo visible en pantalla
+        } else {
+            // YA VISTO
+            container.style.display = "none";
         }
     }
 
@@ -449,7 +483,8 @@
         if (search && !isTrash) {
             // Busqueda global si hay texto
             items = window.data.filter(i => i.parent!=='trash' && (window.normalizeText(i.title).includes(search) || (i.type==='link' && window.normalizeText(i.link).includes(search))));
-            breadcrumbsDiv.innerHTML = `<span class="crumb">Resultados de búsqueda</span>`;
+            breadcrumbsDiv.innerHTML = `<span class="crumb">Resultados</span>`;
+            breadcrumbsDiv.style.display = 'flex';
             backBtn.style.display="none"; // Ocultar atrás en búsqueda global
         }
 
@@ -500,22 +535,36 @@
         container.appendChild(div);
     }
 
-    // --- BREADCRUMBS ---
+    // --- BREADCRUMBS (MODIFICADO: SIN INICIO) ---
     function updateBreadcrumbs() {
-        let html = `<span class="crumb" onclick="goHome()">Inicio</span>`;
-        window.folderHistory.forEach((folder, index) => {
-            html += ` <span class="crumb-sep">></span> <span class="crumb" onclick="goToHistoryIndex(${index})">${folder.title}</span>`;
-        });
+        if(window.folderHistory.length === 0 && !window.currentFolder) {
+            // Estamos en la raíz: ocultar breadcrumbs por completo
+            breadcrumbsDiv.style.display = 'none';
+            return;
+        }
+
+        // Mostrar si no estamos en la raíz
+        breadcrumbsDiv.style.display = 'flex';
+        let html = '';
+
+        // Si hay historia, mostrar las carpetas anteriores
+        if (window.folderHistory.length > 0) {
+            window.folderHistory.forEach((folder, index) => {
+                if(folder.id !== null) { // Ignorar el root en la historia visual
+                    html += `<span class="crumb" onclick="goToHistoryIndex(${index})">${folder.title}</span> <span class="crumb-sep">></span> `;
+                }
+            });
+        }
+        
+        // Mostrar carpeta actual
         if(window.currentFolder) {
             const curr = window.data.find(i=>i.id===window.currentFolder);
-            if(curr) html += ` <span class="crumb-sep">></span> <span style="color:#fff;font-weight:bold;">${curr.title}</span>`;
-        } else if (window.folderHistory.length === 0 && !window.currentFolder) {
-             html = `<span style="color:#fff;font-weight:bold;">Inicio</span>`;
+            if(curr) html += `<span style="color:#fff;font-weight:bold;">${curr.title}</span>`;
         }
+        
         breadcrumbsDiv.innerHTML = html;
     }
 
-    window.goHome = () => { window.folderHistory=[]; window.currentFolder=null; renderItems(); };
     window.goToHistoryIndex = (idx) => {
         const target = window.folderHistory[idx];
         window.folderHistory = window.folderHistory.slice(0, idx);
@@ -851,7 +900,8 @@
             userAvatar.style.display = "block";
             btnLogin.style.display = "none";
             btnLogout.style.display = "flex";
-            setGreeting(); // Update name
+            
+            checkGreetingDisplay(); // Update greeting with name
 
             // Verificar Admin para Poemas
             if(ADMIN_EMAILS.includes(user.email)) {
@@ -896,7 +946,7 @@
             btnLogin.style.display = "flex";
             btnLogout.style.display = "none";
             document.getElementById("adminPoemArea").style.display = "none";
-            setGreeting();
+            checkGreetingDisplay();
             // Fallback localStorage
             window.saveData = function() {
                 localStorage.setItem("linksData", JSON.stringify(window.data));
