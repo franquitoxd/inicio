@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Organizador Ultimate OS</title>
-  <link rel="icon" href="organizador.ico" type="image/x-icon">
   <script src="https://kit.fontawesome.com/3846a067f2.js" crossorigin="anonymous"></script>
   <style>
     /* --- ESTILOS GENERALES & GLASSMORPHISM --- */
@@ -30,6 +29,9 @@
       border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px);
       display: flex; align-items: center; gap: 8px;
     }
+    /* Estilo para que el clima parezca clicable */
+    #weatherWidget { cursor: pointer; transition: background 0.2s; }
+    #weatherWidget:hover { background: rgba(40,40,40,0.8); color: #fff; }
     #weatherIcon { font-size: 18px; color: #ffeb3b; }
 
     /* MENÚ LATERAL */
@@ -64,30 +66,25 @@
     .header-area {
         margin-top: 20px; padding: 0 20px;
         display: flex; flex-direction: column; gap: 10px;
-        pointer-events: none; /* Click through empty space */
+        pointer-events: none;
     }
     
     /* SALUDO FADE */
     #greetingContainer {
-        transition: opacity 1.5s ease-out;
-        opacity: 1;
-        pointer-events: none;
+        transition: opacity 1.5s ease-out; opacity: 1; pointer-events: none;
     }
-    #greetingBox {
-        font-size: 24px; font-weight: 300; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-    }
-    #quoteBox {
-        font-size: 14px; font-style: italic; color: #aaa; margin-top: -5px; margin-bottom: 10px;
-    }
+    #greetingBox { font-size: 24px; font-weight: 300; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+    #quoteBox { font-size: 14px; font-style: italic; color: #aaa; margin-top: -5px; margin-bottom: 10px; }
 
     .nav-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; pointer-events: auto; }
+    
+    /* BREADCRUMBS MODIFICADO */
     #breadcrumbs {
-        display: none; /* Oculto por defecto si está vacío */
-        align-items: center; gap: 8px; background: rgba(30,30,30,0.6);
+        display: flex; align-items: center; gap: 8px; background: rgba(30,30,30,0.6);
         padding: 5px 15px; border-radius: 20px; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.1);
         font-size: 14px; color: #ddd;
     }
-    .crumb { cursor: pointer; transition: color 0.2s; }
+    .crumb { cursor: pointer; transition: color 0.2s; display: flex; align-items: center; gap:5px; }
     .crumb:hover { color: #00aaff; text-decoration: underline; }
     .crumb-sep { color: #666; font-size: 10px; }
     
@@ -161,8 +158,19 @@
     #editor { flex: 1; background: #121212; padding: 30px; overflow-y: auto; outline: none; line-height: 1.6; color: #ddd; font-size: 16px; }
     .editor-toolbar { display: flex; gap: 5px; background: #1e1e1e; padding: 8px 10px; border-bottom: 1px solid #333; flex-wrap: wrap; }
     
-    /* CHECKBOX TAREAS */
     input[type=checkbox] { accent-color: #00aaff; width: 16px; height: 16px; cursor: pointer; }
+
+    /* ESTILOS BOTON DE POEMA FLOTANTE */
+    #quickPoemBtn {
+        cursor: pointer; position:fixed; top:80px; right:20px; z-index:29; 
+        background:rgba(30,30,30,0.6); color:#e040fb; border:1px solid #555; 
+        border-radius:8px; padding:10px 14px; font-size:20px; backdrop-filter:blur(5px);
+        transition: transform 0.2s, background 0.2s;
+    }
+    #quickPoemBtn:hover { transform: scale(1.1); background: rgba(50,50,50,0.8); }
+
+    #menuBtn { cursor: pointer; position:fixed; top:20px; right:20px; z-index:30; background:rgba(30,30,30,0.6); color:white; border:1px solid #555; border-radius:8px; padding:10px 14px; font-size:20px; backdrop-filter:blur(5px); }
+
   </style>
 </head>
 
@@ -178,11 +186,12 @@
 
       <div class="nav-bar">
           <button id="backBtn"><i class="fa-solid fa-arrow-left"></i></button>
-          <div id="breadcrumbs"></div> <button id="headerEmptyTrashBtn"><i class="fa-solid fa-fire"></i> Vaciar Papelera</button>
+          <div id="breadcrumbs"></div> 
+          <button id="headerEmptyTrashBtn"><i class="fa-solid fa-fire"></i> Vaciar Papelera</button>
       </div>
   </div>
 
-  <div id="bottomWidget">
+  <div id="bottomWidget" title="Clic para cambiar ubicación">
       <div class="widget-box" id="clock">00:00:00</div>
       <div class="widget-box" id="weatherWidget"><i class="fa-solid fa-cloud" id="weatherIcon"></i> <span id="tempText">--°C</span></div>
   </div>
@@ -214,7 +223,7 @@
     </div>
     
     <div class="menu-section">
-        <button class="menu-btn" id="poemBtn" style="color:#e040fb;"><i class="fa-solid fa-feather-pointed"></i> Poema Aleatorio</button>
+        <button class="menu-btn" id="poemBtn" style="color:#e040fb; display:none;"><i class="fa-solid fa-pen-nib"></i> Admin Poemas</button>
         <button class="menu-btn" id="statsBtn" style="color:#00e676;"><i class="fa-solid fa-chart-pie"></i> Estadísticas</button>
         <button class="menu-btn" id="changeBgBtn"><i class="fa-regular fa-image"></i> Fondos</button>
         <button class="menu-btn" id="trashBtn" style="color:#ff6b6b;"><i class="fa-solid fa-trash"></i> Papelera</button>
@@ -226,7 +235,8 @@
     </div>
   </div>
 
-  <button id="menuBtn" style="cursor: pointer; position:fixed; top:20px; right:20px; z-index:30; background:rgba(30,30,30,0.6); color:white; border:1px solid #555; border-radius:8px; padding:10px 14px; font-size:20px; backdrop-filter:blur(5px);"><i class="fa-solid fa-bars"></i></button>
+  <button id="menuBtn"><i class="fa-solid fa-bars"></i></button>
+  <button id="quickPoemBtn"><i class="fa-solid fa-feather-pointed"></i></button>
 
   <div id="container"></div>
   <input type="text" id="searchBottom" placeholder="Buscar (Ctrl + K)...">
@@ -241,7 +251,7 @@
   <div class="modal" id="bgModal">
     <div class="modal-content">
         <h3><i class="fa-regular fa-image"></i> Gestión de Fondos</h3>
-        <p style="font-size:12px; color:#aaa;">Pega enlaces de imagen. Al pegar uno, se hará un salto de línea automático para el siguiente.</p>
+        <p style="font-size:12px; color:#aaa;">Pega enlaces de imagen.</p>
         <textarea id="bgUrlInput" rows="8" placeholder="https://..."></textarea>
         <div class="modal-btn-group">
             <button id="btnApplyBg" style="background:#0078d4;">Guardar</button>
@@ -283,13 +293,14 @@
         <h3><i class="fa-solid fa-feather"></i> Momento Poético</h3>
         <div id="poemBody">Cargando...</div>
         <span id="poemAuthor"></span>
-        <hr style="border-color:#333; width:100%; margin:15px 0;">
         
-        <div id="adminPoemArea" style="display:none; text-align:left; background:rgba(0,0,0,0.2); padding:10px; border-radius:8px;">
-            <h5 style="margin:0 0 5px 0; color:#00e676;">Panel Admin: Agregar</h5>
-            <textarea id="newPoemContent" rows="3" placeholder="Escribe el poema..." style="font-size:12px;"></textarea>
-            <input type="text" id="newPoemAuthor" placeholder="Autor" style="margin-top:5px; font-size:12px;">
-            <button id="btnSavePoem" style="width:100%; margin-top:5px; background:#00e676; color:black; border:none; padding:5px; border-radius:4px; cursor:pointer;">Publicar Poema</button>
+        <div id="adminPoemArea" style="display:none; border-top:1px solid #444; margin-top:15px; padding-top:10px;">
+            <div style="text-align:left; background:rgba(0,0,0,0.2); padding:10px; border-radius:8px;">
+                <h5 style="margin:0 0 5px 0; color:#00e676;">Panel Admin: Agregar Poema</h5>
+                <textarea id="newPoemContent" rows="3" placeholder="Escribe el poema..." style="font-size:12px;"></textarea>
+                <input type="text" id="newPoemAuthor" placeholder="Autor" style="margin-top:5px; font-size:12px;">
+                <button id="btnSavePoem" style="width:100%; margin-top:5px; background:#00e676; color:black; border:none; padding:5px; border-radius:4px; cursor:pointer;">Publicar Poema</button>
+            </div>
         </div>
 
         <button onclick="document.getElementById('poemModal').style.display='none'" style="background:#333; color:white; border:none; padding:10px; width:100%; border-radius:8px; margin-top:10px; cursor:pointer;">Cerrar</button>
@@ -320,9 +331,6 @@
             <button class="tool-btn" onclick="document.execCommand('underline')" title="Subrayado"><u>U</u></button>
             <div style="width:1px; height:20px; background:#444; margin:0 5px;"></div>
             <button class="tool-btn" id="addCheckListBtn" title="Lista de Tareas"><i class="fa-solid fa-list-check"></i></button>
-            <button class="tool-btn" id="addLinkToNoteBtn"><i class="fa-solid fa-link"></i></button>
-            <button class="tool-btn" id="addImageToNoteBtn"><i class="fa-regular fa-image"></i></button>
-            <button class="tool-btn" id="addDateBtn"><i class="fa-regular fa-clock"></i></button>
         </div>
         <div id="editor" contenteditable="false"></div>
     </div>
@@ -343,6 +351,7 @@
     window.folderPINs = JSON.parse(localStorage.getItem("folderPINs")) || {};
     window.bgConfig = JSON.parse(localStorage.getItem("bgConfig")) || [];
     window.viewMode = localStorage.getItem("viewMode") || 'grid';
+    window.weatherConfig = JSON.parse(localStorage.getItem("weatherConfig")) || { city: null, lat: null, lon: null };
     
     window.currentFolder = null;
     window.folderHistory = []; // Pila de objetos {id, title}
@@ -377,9 +386,10 @@
         renderItems();
         updateClock();
         fetchWeather();
-        checkGreetingDisplay(); // Comprobar si mostrar saludo
+        checkGreetingDisplay();
         applyBackground();
         setInterval(updateClock, 1000);
+        setInterval(fetchWeather, 600000); // Actualizar clima cada 10 min
         
         // Auto newline en background
         document.getElementById("bgUrlInput").addEventListener('input', function(e) {
@@ -393,41 +403,35 @@
         document.addEventListener('keydown', handleShortcuts);
     }
 
-    // --- LOGICA DE SALUDO (UNA VEZ POR TURNO) ---
+    // --- LOGICA DE SALUDO ---
     function checkGreetingDisplay() {
         const now = new Date();
         const hour = now.getHours();
-        const dateStr = now.toLocaleDateString(); // "26/11/2025"
+        const dateStr = now.toLocaleDateString(); 
         
-        // Definir turno
         let period = "Noche";
         let greet = "Buenas noches";
         if(hour >= 6 && hour < 12) { period = "Mañana"; greet = "Buenos días"; }
         else if(hour >= 12 && hour < 20) { period = "Tarde"; greet = "Buenas tardes"; }
 
-        // Crear llave única para hoy+turno
         const storageKey = `seen_${dateStr}_${period}`;
         const hasSeen = localStorage.getItem(storageKey);
         const container = document.getElementById("greetingContainer");
 
         if(!hasSeen) {
-            // MOSTRAR
             const name = window.currentUser ? window.currentUser.displayName.split(" ")[0] : "Usuario";
             document.getElementById("greetingBox").textContent = `${greet}, ${name}.`;
             document.getElementById("quoteBox").textContent = quotes[Math.floor(Math.random() * quotes.length)];
             
             container.style.display = "block";
-            // Wait slight delay to render block then opacity
             setTimeout(() => {
-                // Iniciar fade out despues de 4 segundos
                 container.style.opacity = "0";
                 setTimeout(() => {
                     container.style.display = "none";
-                    localStorage.setItem(storageKey, "true"); // Guardar que ya se vió
-                }, 1500); // Tiempo de la transición CSS
-            }, 4000); // Tiempo visible en pantalla
+                    localStorage.setItem(storageKey, "true");
+                }, 1500);
+            }, 4000);
         } else {
-            // YA VISTO
             container.style.display = "none";
         }
     }
@@ -436,17 +440,56 @@
         document.getElementById("clock").textContent = new Date().toLocaleTimeString();
     }
 
-    function fetchWeather() {
-        if(navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(async pos => {
-                try {
-                    const {latitude, longitude} = pos.coords;
-                    const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`);
-                    const data = await res.json();
-                    document.getElementById("tempText").textContent = `${data.current_weather.temperature}°C`;
-                } catch(e) { document.getElementById("tempText").textContent = "N/A"; }
-            }, () => { document.getElementById("tempText").textContent = "Sin GPS"; });
+    // --- LOGICA CLIMA CONFIGURABLE ---
+    document.getElementById("weatherWidget").onclick = async () => {
+        const city = prompt("Configurar Ubicación:\nIngresa el nombre de tu ciudad (ej: Madrid, Buenos Aires):", window.weatherConfig.city || "");
+        if(city !== null && city.trim() !== "") {
+            document.getElementById("tempText").textContent = "Buscando...";
+            try {
+                // Usar Geocoding API de Open-Meteo
+                const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=es&format=json`);
+                const geoData = await geoRes.json();
+                
+                if(geoData.results && geoData.results.length > 0) {
+                    const place = geoData.results[0];
+                    window.weatherConfig = { city: place.name, lat: place.latitude, lon: place.longitude };
+                    localStorage.setItem("weatherConfig", JSON.stringify(window.weatherConfig));
+                    if(window.saveData) window.saveData(); // Guardar en nube si hay user
+                    fetchWeather();
+                } else {
+                    alert("Ciudad no encontrada.");
+                    document.getElementById("tempText").textContent = "Error";
+                }
+            } catch(e) {
+                console.error(e);
+                alert("Error de conexión al buscar ciudad.");
+            }
         }
+    };
+
+    async function fetchWeather() {
+        // Prioridad: Configuración manual -> GPS -> Fallback
+        let lat, lon;
+        
+        if (window.weatherConfig.lat && window.weatherConfig.lon) {
+            lat = window.weatherConfig.lat;
+            lon = window.weatherConfig.lon;
+            getWeatherFromApi(lat, lon);
+        } else if(navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(pos => {
+                getWeatherFromApi(pos.coords.latitude, pos.coords.longitude);
+            }, () => { document.getElementById("tempText").textContent = "Clic para config."; });
+        } else {
+            document.getElementById("tempText").textContent = "N/A";
+        }
+    }
+
+    async function getWeatherFromApi(lat, lon) {
+        try {
+            const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+            const data = await res.json();
+            document.getElementById("tempText").textContent = `${data.current_weather.temperature}°C`;
+        } catch(e) { document.getElementById("tempText").textContent = "Error"; }
     }
 
     // --- LOGICA PRINCIPAL DE RENDERIZADO ---
@@ -454,22 +497,17 @@
         container.innerHTML = "";
         const isTrash = folderId === 'trash';
         
-        // UI Updates
         headerEmpty.style.display = (isTrash && window.data.some(i=>i.parent==='trash')) ? 'block' : 'none';
         backBtn.style.display = folderId ? 'block' : 'none';
         
-        // Breadcrumbs Update
         updateBreadcrumbs();
 
-        // Modo Lista/Grid
         if(window.viewMode === 'list') container.classList.add('list-mode');
         else container.classList.remove('list-mode');
         document.getElementById("toggleViewBtn").innerHTML = window.viewMode === 'grid' ? '<i class="fa-solid fa-list"></i> Vista Lista' : '<i class="fa-solid fa-border-all"></i> Vista Iconos';
 
-        // Filtrado
         let items = window.data.filter(i => i.parent === folderId);
         
-        // Ordenamiento Automático: Carpetas > Notas > Enlaces > Alfabético
         if(!isTrash) {
             items.sort((a, b) => {
                 const typeOrder = { 'folder': 1, 'note': 2, 'link': 3 };
@@ -478,14 +516,11 @@
             });
         }
 
-        // Búsqueda
         const search = window.normalizeText(searchBottom.value);
         if (search && !isTrash) {
-            // Busqueda global si hay texto
             items = window.data.filter(i => i.parent!=='trash' && (window.normalizeText(i.title).includes(search) || (i.type==='link' && window.normalizeText(i.link).includes(search))));
             breadcrumbsDiv.innerHTML = `<span class="crumb">Resultados</span>`;
-            breadcrumbsDiv.style.display = 'flex';
-            backBtn.style.display="none"; // Ocultar atrás en búsqueda global
+            backBtn.style.display="none"; 
         }
 
         if (items.length === 0) container.innerHTML = `<div style="width:100%;text-align:center;color:#666;margin-top:50px;font-size:18px;">${isTrash?'Papelera vacía':'Carpeta vacía'}</div>`;
@@ -535,34 +570,39 @@
         container.appendChild(div);
     }
 
-    // --- BREADCRUMBS (MODIFICADO: SIN INICIO) ---
+    // --- BREADCRUMBS CON INICIO ---
     function updateBreadcrumbs() {
-        if(window.folderHistory.length === 0 && !window.currentFolder) {
-            // Estamos en la raíz: ocultar breadcrumbs por completo
-            breadcrumbsDiv.style.display = 'none';
-            return;
-        }
-
-        // Mostrar si no estamos en la raíz
-        breadcrumbsDiv.style.display = 'flex';
-        let html = '';
-
-        // Si hay historia, mostrar las carpetas anteriores
-        if (window.folderHistory.length > 0) {
+        // Siempre mostrar "Inicio"
+        let html = `<span class="crumb" onclick="goHome()"><i class="fa-solid fa-house"></i> Inicio</span>`;
+        
+        if(window.folderHistory.length > 0) {
+             html += ` <span class="crumb-sep">></span> `;
             window.folderHistory.forEach((folder, index) => {
-                if(folder.id !== null) { // Ignorar el root en la historia visual
+                if(folder.id !== null) { 
                     html += `<span class="crumb" onclick="goToHistoryIndex(${index})">${folder.title}</span> <span class="crumb-sep">></span> `;
                 }
             });
         }
         
-        // Mostrar carpeta actual
         if(window.currentFolder) {
             const curr = window.data.find(i=>i.id===window.currentFolder);
-            if(curr) html += `<span style="color:#fff;font-weight:bold;">${curr.title}</span>`;
+            // Si estamos en la raíz no agregamos nada más, pero como currentFolder es null en raiz, esto entra solo si estamos dentro
+            if(curr) {
+                // Verificar si falta el separador
+                if(window.folderHistory.length === 0) html += ` <span class="crumb-sep">></span> `;
+                html += `<span style="color:#fff;font-weight:bold;">${curr.title}</span>`;
+            } else if (window.currentFolder === 'trash') {
+                 html += ` <span class="crumb-sep">></span> <span style="color:#ff6b6b;font-weight:bold;">Papelera</span>`;
+            }
         }
         
         breadcrumbsDiv.innerHTML = html;
+    }
+    
+    window.goHome = () => {
+        window.folderHistory = [];
+        window.currentFolder = null;
+        renderItems(null);
     }
 
     window.goToHistoryIndex = (idx) => {
@@ -602,7 +642,6 @@
 
     // --- YOUTUBE PREVIEW ---
     function openLink(url) {
-        // Regex para detectar Youtube
         const ytReg = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
         const match = url.match(ytReg);
         if(match && match[1]) {
@@ -622,11 +661,7 @@
             contextMenu.style.display='none'; addOptions.style.display='none';
             document.getElementById("ytFrame").src = ""; // Stop video
         }
-        // Buscar Ctrl + K
-        if(e.ctrlKey && e.key === 'k') {
-            e.preventDefault(); searchBottom.focus();
-        }
-        // Alt + N (Nota), Alt + F (Folder), Alt + L (Link)
+        if(e.ctrlKey && e.key === 'k') { e.preventDefault(); searchBottom.focus(); }
         if(e.altKey) {
             if(e.key === 'n') { e.preventDefault(); openModal(null, 'note'); }
             if(e.key === 'f') { e.preventDefault(); openModal(null, 'folder'); }
@@ -650,13 +685,12 @@
     window.normalizeText = (t) => t ? t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : "";
     window.getRandomColor = () => { const l="0123456789ABCDEF"; let c="#"; for(let i=0;i<6;i++) c+=l[Math.floor(Math.random()*16)]; return c; };
 
-    // --- CONTEXT MENU ---
+    // --- CONTEXT MENU (Sin cambios mayores) ---
     function showContextMenu(e, item) {
         e.preventDefault(); contextItem = item;
         const isTrash = item.parent === 'trash';
         const isLink = item.type === 'link';
         
-        // Visibilidad de botones
         document.getElementById("ctxOpenTab").style.display = isLink ? 'block':'none';
         document.getElementById("ctxMove").style.display = (!isTrash) ? 'block':'none';
         document.getElementById("ctxCopyLink").style.display = isLink?'block':'none';
@@ -673,11 +707,9 @@
         contextMenu.style.left=`${x}px`; contextMenu.style.top=`${y}px`;
     }
 
-    // Acciones Contextuales
     document.getElementById("ctxMove").onclick = () => {
         const select = document.getElementById("moveSelect");
         select.innerHTML = `<option value="root">/ Inicio</option>`;
-        // Llenar select con carpetas (recursivo simple o plano)
         window.data.filter(i=>i.type==='folder' && i.id!==contextItem.id && i.parent!=='trash').forEach(f => {
              select.innerHTML += `<option value="${f.id}">📂 ${f.title}</option>`;
         });
@@ -687,28 +719,28 @@
     document.getElementById("confirmMove").onclick = () => {
         const target = document.getElementById("moveSelect").value;
         contextItem.parent = target === 'root' ? null : parseInt(target);
-        saveData(); renderItems(window.currentFolder);
+        if(window.saveData) window.saveData(); renderItems(window.currentFolder);
         document.getElementById("moveModal").style.display="none";
     }
     document.getElementById("cancelMove").onclick = () => document.getElementById("moveModal").style.display="none";
 
     document.getElementById("ctxDuplicate").onclick = () => { 
         const n=JSON.parse(JSON.stringify(contextItem)); n.id=Date.now(); n.title+=" (Copia)"; 
-        window.data.push(n); saveData(); renderItems(window.currentFolder); 
+        window.data.push(n); if(window.saveData) window.saveData(); renderItems(window.currentFolder); 
     };
     document.getElementById("ctxCopyLink").onclick = () => navigator.clipboard.writeText(contextItem.link);
     document.getElementById("ctxColor").onclick = () => document.getElementById("ctxColorInput").click();
-    document.getElementById("ctxColorInput").onchange = (e) => { if(contextItem){contextItem.color=e.target.value; saveData(); renderItems(window.currentFolder);} };
+    document.getElementById("ctxColorInput").onchange = (e) => { if(contextItem){contextItem.color=e.target.value; if(window.saveData) window.saveData(); renderItems(window.currentFolder);} };
     document.getElementById("ctxEdit").onclick = () => { 
         if(contextItem.type==='folder' && window.folderPINs[contextItem.id] && prompt("PIN")!==window.folderPINs[contextItem.id]) return; 
         openModal(contextItem.id); 
     };
     document.getElementById("ctxDelete").onclick = () => { 
         if(contextItem.type==='folder' && window.folderPINs[contextItem.id] && prompt("PIN")!==window.folderPINs[contextItem.id]) return; 
-        contextItem.originalParent=contextItem.parent; contextItem.parent='trash'; contextItem.deletedDate=Date.now(); saveData(); renderItems(window.currentFolder); 
+        contextItem.originalParent=contextItem.parent; contextItem.parent='trash'; contextItem.deletedDate=Date.now(); if(window.saveData) window.saveData(); renderItems(window.currentFolder); 
     };
-    document.getElementById("ctxRestore").onclick = () => { contextItem.parent=contextItem.originalParent||null; delete contextItem.deletedDate; saveData(); renderItems('trash'); };
-    document.getElementById("ctxPermDelete").onclick = () => { if(confirm("¿Eliminar permanentemente?")) { deleteItemComplete(contextItem); saveData(); renderItems('trash'); } };
+    document.getElementById("ctxRestore").onclick = () => { contextItem.parent=contextItem.originalParent||null; delete contextItem.deletedDate; if(window.saveData) window.saveData(); renderItems('trash'); };
+    document.getElementById("ctxPermDelete").onclick = () => { if(confirm("¿Eliminar permanentemente?")) { deleteItemComplete(contextItem); if(window.saveData) window.saveData(); renderItems('trash'); } };
     function deleteItemComplete(item) {
         if(item.type==='folder') window.data.filter(i=>i.parent===item.id).forEach(k=>deleteItemComplete(k));
         window.data = window.data.filter(x=>x.id!==item.id); delete window.folderPINs[item.id];
@@ -767,7 +799,7 @@
                 if(pin) window.folderPINs[newItem.id]=pin;
             }
         }
-        saveData(); renderItems(window.currentFolder); document.getElementById("modal").style.display="none";
+        if(window.saveData) window.saveData(); renderItems(window.currentFolder); document.getElementById("modal").style.display="none";
     }
 
     // --- EDITOR DE NOTAS ---
@@ -785,7 +817,7 @@
             editor.focus(); document.getElementById("modeToggle").textContent="Guardar"; 
             document.getElementById("modeToggle").style.background="#4caf50"; document.getElementById("editToolbar").style.display="flex"; 
         } else { 
-            const n = window.data.find(x=>x.id===currentNoteId); if(n){ n.content=editor.innerHTML; saveData(); } 
+            const n = window.data.find(x=>x.id===currentNoteId); if(n){ n.content=editor.innerHTML; if(window.saveData) window.saveData(); } 
             document.getElementById("modeToggle").textContent="Editar"; document.getElementById("modeToggle").style.background="#0078d4"; 
             document.getElementById("editToolbar").style.display="none"; 
         }
@@ -794,6 +826,7 @@
         const checkbox = `<div style="display:flex;align-items:center;margin:5px 0;"><input type="checkbox" style="margin-right:10px;"> <span>Nueva Tarea</span></div>`;
         document.execCommand('insertHTML', false, checkbox);
     };
+    document.getElementById("closeEditorBtn").onclick = () => document.getElementById("noteEditorModal").style.display='none';
 
     // --- PANEL ESTADISTICAS ---
     document.getElementById("statsBtn").onclick = () => {
@@ -810,7 +843,7 @@
             <strong>En Papelera:</strong> ${trash}<br>
             <hr style="border-color:#555">
             <strong>Usuario:</strong> ${window.currentUser ? window.currentUser.displayName : 'Local'}<br>
-            <strong>Versión:</strong> Ultimate OS v2.0
+            <strong>Ubicación Clima:</strong> ${window.weatherConfig.city || 'Auto (GPS)'}
         `;
         document.getElementById("statsContent").innerHTML = html;
         document.getElementById("statsModal").style.display = 'flex';
@@ -829,7 +862,7 @@
 
     // Fondo UI
     document.getElementById("changeBgBtn").onclick = () => { document.getElementById('bgModal').style.display = 'flex'; document.getElementById('bgUrlInput').value = window.bgConfig.join('\n'); };
-    document.getElementById("btnApplyBg").onclick = () => { window.bgConfig = document.getElementById('bgUrlInput').value.split('\n').map(l => l.trim()).filter(l => l.length > 0); saveData(); applyBackground(); document.getElementById('bgModal').style.display = 'none'; };
+    document.getElementById("btnApplyBg").onclick = () => { window.bgConfig = document.getElementById('bgUrlInput').value.split('\n').map(l => l.trim()).filter(l => l.length > 0); if(window.saveData) window.saveData(); applyBackground(); document.getElementById('bgModal').style.display = 'none'; };
     document.getElementById("btnCloseBg").onclick = () => document.getElementById('bgModal').style.display='none';
 
     // Drag Drop
@@ -841,21 +874,23 @@
         e.stopPropagation(); const did = parseInt(this.dataset.id);
         const t = window.data.find(i=>i.id===did); const s = window.data.find(i=>i.id===window.dragSrcId);
         if(window.dragSrcId !== did && t.type==='folder') {
-            if(confirm(`¿Mover a ${t.title}?`)) { s.parent=t.id; saveData(); renderItems(window.currentFolder); }
+            if(confirm(`¿Mover a ${t.title}?`)) { s.parent=t.id; if(window.saveData) window.saveData(); renderItems(window.currentFolder); }
         }
         return false;
     };
     window.handleDragEnd = function(e) { this.classList.remove('dragging'); this.style.transform="scale(1)"; };
 
-    // Fallback save
-    window.saveData = function() {
-        localStorage.setItem("linksData", JSON.stringify(window.data));
-        localStorage.setItem("folderPINs", JSON.stringify(window.folderPINs));
-        localStorage.setItem("bgConfig", JSON.stringify(window.bgConfig));
-        localStorage.setItem("viewMode", window.viewMode);
+    // Fallback save si firebase falla o no hay user
+    if(!window.saveData) {
+        window.saveData = function() {
+            localStorage.setItem("linksData", JSON.stringify(window.data));
+            localStorage.setItem("folderPINs", JSON.stringify(window.folderPINs));
+            localStorage.setItem("bgConfig", JSON.stringify(window.bgConfig));
+            localStorage.setItem("viewMode", window.viewMode);
+            localStorage.setItem("weatherConfig", JSON.stringify(window.weatherConfig));
+        }
     }
     
-    // Inicializar
     init();
   </script>
 
@@ -897,7 +932,7 @@
             btnLogin.style.display = "none";
             btnLogout.style.display = "flex";
             
-            checkGreetingDisplay(); // Intenta mostrar saludo al loguear
+            checkGreetingDisplay();
 
             // --- Lógica de Roles ---
             let isGlobalAdmin = false;
@@ -907,44 +942,46 @@
 
                 if (userSnap.exists()) {
                     const userData = userSnap.data();
-                    // Chequeo de rol
-                    if (userData.role === 'admin') {
-                        isGlobalAdmin = true;
-                    }
+                    if (userData.role === 'admin') isGlobalAdmin = true;
                     
                     // Cargar datos
                     if(userData.linksData) window.data = JSON.parse(userData.linksData);
                     if(userData.folderPINs) window.folderPINs = JSON.parse(userData.folderPINs);
                     if(userData.bgConfig) { window.bgConfig = JSON.parse(userData.bgConfig); window.applyBackground(); }
                     if(userData.viewMode) window.viewMode = userData.viewMode;
+                    if(userData.weatherConfig) {
+                        window.weatherConfig = JSON.parse(userData.weatherConfig);
+                        fetchWeather(); // Refrescar clima con datos de nube
+                    }
                     window.renderItems(window.currentFolder);
 
                 } else {
-                    // Si es usuario nuevo, crear doc por defecto con rol 'user'
                     await setDoc(userRef, { role: 'user', linksData: '[]' }, { merge: true });
                 }
             } catch (e) { console.error("Error leyendo usuario", e); }
 
-            // Mostrar UI Admin si corresponde
+            // LÓGICA DEL BOTÓN DE MENÚ (Solo para ADMIN)
             if(isGlobalAdmin) {
-                document.getElementById("adminPoemArea").style.display = "block";
+                document.getElementById("poemBtn").style.display = "flex";
             } else {
-                document.getElementById("adminPoemArea").style.display = "none";
+                document.getElementById("poemBtn").style.display = "none";
             }
 
-            // Guardado en nube (usando merge para no borrar el rol)
+            // Guardado en nube
             window.saveData = async function() {
                 localStorage.setItem("linksData", JSON.stringify(window.data));
                 localStorage.setItem("folderPINs", JSON.stringify(window.folderPINs));
                 localStorage.setItem("bgConfig", JSON.stringify(window.bgConfig));
                 localStorage.setItem("viewMode", window.viewMode);
+                localStorage.setItem("weatherConfig", JSON.stringify(window.weatherConfig));
                 try {
                     await setDoc(doc(db, "users", user.uid), {
                         linksData: JSON.stringify(window.data),
                         folderPINs: JSON.stringify(window.folderPINs),
                         bgConfig: JSON.stringify(window.bgConfig),
-                        viewMode: window.viewMode
-                    }, { merge: true }); // IMPORTANTE: merge para no borrar el rol
+                        viewMode: window.viewMode,
+                        weatherConfig: JSON.stringify(window.weatherConfig)
+                    }, { merge: true });
                 } catch (e) { console.error("Error nube", e); }
             };
 
@@ -955,7 +992,10 @@
             userAvatar.style.display = "none";
             btnLogin.style.display = "flex";
             btnLogout.style.display = "none";
-            document.getElementById("adminPoemArea").style.display = "none";
+            
+            // Ocultar botón admin
+            document.getElementById("poemBtn").style.display = "none";
+            
             checkGreetingDisplay();
             
             window.saveData = function() {
@@ -963,16 +1003,26 @@
                 localStorage.setItem("folderPINs", JSON.stringify(window.folderPINs));
                 localStorage.setItem("bgConfig", JSON.stringify(window.bgConfig));
                 localStorage.setItem("viewMode", window.viewMode);
+                localStorage.setItem("weatherConfig", JSON.stringify(window.weatherConfig));
             }
         }
     });
 
     // --- LOGICA DE POEMAS (FIRESTORE PUBLICO) ---
-    document.getElementById("poemBtn").onclick = async () => {
+    // Función común para cargar poema
+    async function fetchRandomPoem(isAdminMode) {
         document.getElementById("poemModal").style.display = "flex";
         document.getElementById("poemBody").textContent = "Buscando inspiración...";
         document.getElementById("poemAuthor").textContent = "";
         
+        // Controlar visibilidad del admin area según el modo
+        const adminArea = document.getElementById("adminPoemArea");
+        if(isAdminMode) {
+            adminArea.style.display = "block";
+        } else {
+            adminArea.style.display = "none";
+        }
+
         try {
             const querySnapshot = await getDocs(collection(db, "public_poems"));
             const poems = [];
@@ -986,13 +1036,22 @@
                 document.getElementById("poemBody").textContent = "No hay poemas aún.";
             }
         } catch(e) {
-            console.error(e);
             document.getElementById("poemBody").textContent = "Caminante, no hay camino,\nse hace camino al andar.";
             document.getElementById("poemAuthor").textContent = "- Antonio Machado";
         }
     }
 
-    // Agregar Poema (Solo Admin)
+    // 1. Botón Flotante (PARA TODOS - SOLO LECTURA)
+    document.getElementById("quickPoemBtn").onclick = () => {
+        fetchRandomPoem(false); // false = modo solo lectura
+    };
+
+    // 2. Botón Menú (SOLO ADMIN - GESTION)
+    document.getElementById("poemBtn").onclick = () => {
+        fetchRandomPoem(true); // true = modo admin (mostrar form de agregar)
+    };
+
+    // Agregar Poema (Solo funciona si eres Admin y el área está visible)
     document.getElementById("btnSavePoem").onclick = async () => {
         const content = document.getElementById("newPoemContent").value;
         const author = document.getElementById("newPoemAuthor").value;
@@ -1002,6 +1061,8 @@
                 alert("Poema publicado");
                 document.getElementById("newPoemContent").value = "";
                 document.getElementById("newPoemAuthor").value = "";
+                // Refrescar para ver el nuevo (o uno random)
+                fetchRandomPoem(true);
             } catch(e) { alert("Error: No tienes permisos."); }
         }
     }
