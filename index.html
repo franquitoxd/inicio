@@ -879,10 +879,6 @@
     const db = getFirestore(app);
     const provider = new GoogleAuthProvider();
 
-    // --- LOGICA ADMIN (EDITAR AQUI TU EMAIL) ---
-    // IMPORTANTE: Pon aquí tu email de Google para ser el administrador de los poemas.
-    const ADMIN_EMAILS = ["franquitoxdddd@gmail.com"]; 
-
     // Referencias UI
     const btnLogin = document.getElementById("btnLogin");
     const btnLogout = document.getElementById("btnLogout");
@@ -901,16 +897,42 @@
             btnLogin.style.display = "none";
             btnLogout.style.display = "flex";
             
-            checkGreetingDisplay(); // Update greeting with name
+            checkGreetingDisplay(); // Intenta mostrar saludo al loguear
 
-            // Verificar Admin para Poemas
-            if(ADMIN_EMAILS.includes(user.email)) {
+            // --- Lógica de Roles ---
+            let isGlobalAdmin = false;
+            try {
+                const userRef = doc(db, "users", user.uid);
+                const userSnap = await getDoc(userRef);
+
+                if (userSnap.exists()) {
+                    const userData = userSnap.data();
+                    // Chequeo de rol
+                    if (userData.role === 'admin') {
+                        isGlobalAdmin = true;
+                    }
+                    
+                    // Cargar datos
+                    if(userData.linksData) window.data = JSON.parse(userData.linksData);
+                    if(userData.folderPINs) window.folderPINs = JSON.parse(userData.folderPINs);
+                    if(userData.bgConfig) { window.bgConfig = JSON.parse(userData.bgConfig); window.applyBackground(); }
+                    if(userData.viewMode) window.viewMode = userData.viewMode;
+                    window.renderItems(window.currentFolder);
+
+                } else {
+                    // Si es usuario nuevo, crear doc por defecto con rol 'user'
+                    await setDoc(userRef, { role: 'user', linksData: '[]' }, { merge: true });
+                }
+            } catch (e) { console.error("Error leyendo usuario", e); }
+
+            // Mostrar UI Admin si corresponde
+            if(isGlobalAdmin) {
                 document.getElementById("adminPoemArea").style.display = "block";
             } else {
                 document.getElementById("adminPoemArea").style.display = "none";
             }
-            
-            // Override saveData para Nube
+
+            // Guardado en nube (usando merge para no borrar el rol)
             window.saveData = async function() {
                 localStorage.setItem("linksData", JSON.stringify(window.data));
                 localStorage.setItem("folderPINs", JSON.stringify(window.folderPINs));
@@ -922,24 +944,12 @@
                         folderPINs: JSON.stringify(window.folderPINs),
                         bgConfig: JSON.stringify(window.bgConfig),
                         viewMode: window.viewMode
-                    });
+                    }, { merge: true }); // IMPORTANTE: merge para no borrar el rol
                 } catch (e) { console.error("Error nube", e); }
             };
 
-            // Cargar datos
-            try {
-                const docSnap = await getDoc(doc(db, "users", user.uid));
-                if (docSnap.exists()) {
-                    const cData = docSnap.data();
-                    if(cData.linksData) window.data = JSON.parse(cData.linksData);
-                    if(cData.folderPINs) window.folderPINs = JSON.parse(cData.folderPINs);
-                    if(cData.bgConfig) { window.bgConfig = JSON.parse(cData.bgConfig); window.applyBackground(); }
-                    if(cData.viewMode) window.viewMode = cData.viewMode;
-                    window.renderItems(window.currentFolder);
-                }
-            } catch (e) {}
-
         } else {
+            // No logueado
             window.currentUser = null;
             userName.textContent = "Invitado";
             userAvatar.style.display = "none";
@@ -947,7 +957,7 @@
             btnLogout.style.display = "none";
             document.getElementById("adminPoemArea").style.display = "none";
             checkGreetingDisplay();
-            // Fallback localStorage
+            
             window.saveData = function() {
                 localStorage.setItem("linksData", JSON.stringify(window.data));
                 localStorage.setItem("folderPINs", JSON.stringify(window.folderPINs));
@@ -964,7 +974,6 @@
         document.getElementById("poemAuthor").textContent = "";
         
         try {
-            // Leer colección "public_poems"
             const querySnapshot = await getDocs(collection(db, "public_poems"));
             const poems = [];
             querySnapshot.forEach((doc) => poems.push(doc.data()));
@@ -974,11 +983,10 @@
                 document.getElementById("poemBody").textContent = randomPoem.content;
                 document.getElementById("poemAuthor").textContent = "- " + randomPoem.author;
             } else {
-                document.getElementById("poemBody").textContent = "No hay poemas aún. Sé el primero.";
+                document.getElementById("poemBody").textContent = "No hay poemas aún.";
             }
         } catch(e) {
             console.error(e);
-            // Poema por defecto si falla la red o no existe la colección
             document.getElementById("poemBody").textContent = "Caminante, no hay camino,\nse hace camino al andar.";
             document.getElementById("poemAuthor").textContent = "- Antonio Machado";
         }
@@ -994,7 +1002,7 @@
                 alert("Poema publicado");
                 document.getElementById("newPoemContent").value = "";
                 document.getElementById("newPoemAuthor").value = "";
-            } catch(e) { alert("Error: Probablemente no tengas permisos de Admin."); }
+            } catch(e) { alert("Error: No tienes permisos."); }
         }
     }
   </script>
