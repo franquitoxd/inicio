@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Organizador Ultimate OS</title>
-  <link rel="png" href="organizador.png" type="image/x-icon">
+  <link rel="icon" href="organizador.ico" type="image/x-icon">
   <script src="https://kit.fontawesome.com/3846a067f2.js" crossorigin="anonymous"></script>
   <style>
     /* --- ESTILOS GENERALES & GLASSMORPHISM --- */
@@ -161,14 +161,12 @@
 
   <div class="bg-overlay"></div>
   
-  <!-- SALUDO Y BREADCRUMBS -->
   <div class="header-area">
       <div id="greetingBox"></div>
       <div id="quoteBox"></div>
       <div class="nav-bar">
           <button id="backBtn"><i class="fa-solid fa-arrow-left"></i></button>
-          <div id="breadcrumbs"></div> <!-- AQUÍ VAN LAS MIGAS DE PAN -->
-          <button id="headerEmptyTrashBtn"><i class="fa-solid fa-fire"></i> Vaciar Papelera</button>
+          <div id="breadcrumbs"></div> <button id="headerEmptyTrashBtn"><i class="fa-solid fa-fire"></i> Vaciar Papelera</button>
       </div>
   </div>
 
@@ -180,7 +178,6 @@
   <div id="overlay"></div>
   <input type="color" id="ctxColorInput" style="display:none;">
 
-  <!-- MENU CONTEXTUAL -->
   <div id="contextMenu">
     <button id="ctxOpenTab" style="display:none;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir pestaña</button>
     <button id="ctxMove" style="display:none;"><i class="fa-solid fa-folder-tree"></i> Mover a...</button>
@@ -195,7 +192,6 @@
     <button id="ctxPermDelete" style="display:none; color:#ff4444;"><i class="fa-solid fa-ban"></i> Eliminar</button>
   </div>
 
-  <!-- MENU LATERAL -->
   <div id="sideMenu">
     <h3><i class="fa-solid fa-layer-group"></i> Sistema</h3>
     <div id="userSection">
@@ -230,7 +226,6 @@
     <div style="position:relative"><span class="tooltip">Nota (Alt+N)</span><button id="addNoteBtn" style="color:#4caf50"><i class="fa-solid fa-file-lines"></i></button></div>
   </div>
 
-  <!-- MODAL BACKGROUND -->
   <div class="modal" id="bgModal">
     <div class="modal-content">
         <h3><i class="fa-regular fa-image"></i> Gestión de Fondos</h3>
@@ -243,7 +238,6 @@
     </div>
   </div>
 
-  <!-- MODAL ESTADISTICAS -->
   <div class="modal" id="statsModal">
     <div class="modal-content">
         <h3><i class="fa-solid fa-chart-pie"></i> Estadísticas</h3>
@@ -252,7 +246,6 @@
     </div>
   </div>
 
-  <!-- MODAL MOVER -->
   <div class="modal" id="moveModal">
     <div class="modal-content">
         <h3>Mover a...</h3>
@@ -264,7 +257,6 @@
     </div>
   </div>
 
-  <!-- MODAL YOUTUBE -->
   <div class="modal" id="ytModal">
     <div style="position:relative; width:80%; max-width:900px;">
         <div id="closeYt" onclick="document.getElementById('ytModal').style.display='none'">&times;</div>
@@ -274,7 +266,6 @@
     </div>
   </div>
 
-  <!-- MODAL POEMA -->
   <div class="modal" id="poemModal">
     <div class="modal-content">
         <h3><i class="fa-solid fa-feather"></i> Momento Poético</h3>
@@ -282,7 +273,6 @@
         <span id="poemAuthor"></span>
         <hr style="border-color:#333; width:100%; margin:15px 0;">
         
-        <!-- ADMIN AREA -->
         <div id="adminPoemArea" style="display:none; text-align:left; background:rgba(0,0,0,0.2); padding:10px; border-radius:8px;">
             <h5 style="margin:0 0 5px 0; color:#00e676;">Panel Admin: Agregar</h5>
             <textarea id="newPoemContent" rows="3" placeholder="Escribe el poema..." style="font-size:12px;"></textarea>
@@ -294,7 +284,6 @@
     </div>
   </div>
 
-  <!-- MODAL AGREGAR/EDITAR -->
   <div class="modal" id="modal">
     <div class="modal-content">
       <h3 id="modalTitle">Agregar</h3>
@@ -306,7 +295,6 @@
     </div>
   </div>
 
-  <!-- EDITOR DE NOTAS -->
   <div class="modal" id="noteEditorModal">
     <div class="modal-content large">
         <div class="editor-header">
@@ -844,7 +832,7 @@
 
     // --- LOGICA ADMIN (EDITAR AQUI TU EMAIL) ---
     // IMPORTANTE: Pon aquí tu email de Google para ser el administrador de los poemas.
-    const ADMIN_EMAILS = ["tu_email_aqui@gmail.com"]; 
+    const ADMIN_EMAILS = ["franquitoxdddd@gmail.com"]; 
 
     // Referencias UI
     const btnLogin = document.getElementById("btnLogin");
