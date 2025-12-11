@@ -15,24 +15,7 @@
       color: #e0e0e0; overflow-x: hidden; user-select: none;
       min-height: 100vh; transition: background 0.5s ease-in-out;
     }
-    .bg-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.3); z-index: -1; pointer-events: none; }
-
-    /* RELOJ Y CLIMA */
-    #bottomWidget {
-      position: fixed; bottom: 20px; left: 20px;
-      display: flex; gap: 10px; z-index: 10;
-    }
-    .widget-box {
-      background: rgba(20, 20, 20, 0.6); color: #00aaff;
-      padding: 10px 15px; border-radius: 12px; font-family: monospace; font-size: 16px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px);
-      display: flex; align-items: center; gap: 8px;
-    }
-    /* Estilo para que el clima parezca clicable */
-    #weatherWidget { cursor: pointer; transition: background 0.2s; }
-    #weatherWidget:hover { background: rgba(40,40,40,0.8); color: #fff; }
-    #weatherIcon { font-size: 18px; color: #ffeb3b; }
+    .bg-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.4); z-index: -1; pointer-events: none; }
 
     /* MENÚ LATERAL */
     #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); display: none; z-index: 25; backdrop-filter: blur(4px); }
@@ -68,13 +51,18 @@
         display: flex; flex-direction: column; gap: 10px;
         pointer-events: none;
     }
-    
-    /* SALUDO FADE */
-    #greetingContainer {
-        transition: opacity 1.5s ease-out; opacity: 1; pointer-events: none;
+
+    /* RELOJ SOLO */
+    #bottomWidget {
+      position: fixed; bottom: 20px; left: 20px;
+      display: flex; gap: 10px; z-index: 10;
     }
-    #greetingBox { font-size: 24px; font-weight: 300; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-    #quoteBox { font-size: 14px; font-style: italic; color: #aaa; margin-top: -5px; margin-bottom: 10px; }
+    .widget-box {
+      background: rgba(20, 20, 20, 0.6); color: #00aaff;
+      padding: 10px 15px; border-radius: 12px; font-family: monospace; font-size: 16px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px);
+    }
 
     .nav-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; pointer-events: auto; }
     
@@ -147,7 +135,7 @@
     #ytFrame { width: 100%; height: 100%; border: none; }
     #closeYt { position: absolute; top: -40px; right: 0; color: white; font-size: 30px; cursor: pointer; }
 
-    /* MODAL POEMA */
+    /* MODAL VERSÍCULO (Antes Poema) */
     #poemModal .modal-content { text-align: center; max-width: 500px; background: linear-gradient(135deg, #1e1e1e, #2a2a2a); border: 1px solid #555; }
     #poemBody { font-style: italic; font-size: 18px; line-height: 1.6; white-space: pre-wrap; margin: 20px 0; }
     #poemAuthor { font-weight: bold; color: #00aaff; display: block; margin-top: 10px; }
@@ -160,7 +148,7 @@
     
     input[type=checkbox] { accent-color: #00aaff; width: 16px; height: 16px; cursor: pointer; }
 
-    /* ESTILOS BOTON DE POEMA FLOTANTE */
+    /* ESTILOS BOTON DE POEMA/VERSÍCULO FLOTANTE */
     #quickPoemBtn {
         cursor: pointer; position:fixed; top:80px; right:20px; z-index:29; 
         background:rgba(30,30,30,0.6); color:#e040fb; border:1px solid #555; 
@@ -179,11 +167,6 @@
   <div class="bg-overlay"></div>
   
   <div class="header-area">
-      <div id="greetingContainer" style="display:none;">
-          <div id="greetingBox"></div>
-          <div id="quoteBox"></div>
-      </div>
-
       <div class="nav-bar">
           <button id="backBtn"><i class="fa-solid fa-arrow-left"></i></button>
           <div id="breadcrumbs"></div> 
@@ -191,16 +174,15 @@
       </div>
   </div>
 
-  <div id="bottomWidget" title="Clic para cambiar ubicación">
-      <div class="widget-box" id="clock">00:00:00</div>
-      <div class="widget-box" id="weatherWidget"><i class="fa-solid fa-cloud" id="weatherIcon"></i> <span id="tempText">--°C</span></div>
+  <div id="bottomWidget">
+    <div class="widget-box" id="clock">00:00:00</div>
   </div>
 
   <div id="overlay"></div>
   <input type="color" id="ctxColorInput" style="display:none;">
 
   <div id="contextMenu">
-    <button id="ctxOpenTab" style="display:none;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir pestaña</button>
+    <button id="ctxOpenTab" style="display:none;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir en Pestaña</button>
     <button id="ctxMove" style="display:none;"><i class="fa-solid fa-folder-tree"></i> Mover a...</button>
     <div class="separator" id="ctxSep1" style="display:none; height:1px; background:#444; margin:5px 0;"></div>
     <button id="ctxCopyLink" style="display:none;"><i class="fa-regular fa-copy"></i> Copiar URL</button>
@@ -223,7 +205,7 @@
     </div>
     
     <div class="menu-section">
-        <button class="menu-btn" id="poemBtn" style="color:#e040fb; display:none;"><i class="fa-solid fa-pen-nib"></i> Admin Poemas</button>
+        <button class="menu-btn" id="poemBtn" style="color:#e040fb; display:none;"><i class="fa-solid fa-book-bible"></i> Admin Versículos</button>
         <button class="menu-btn" id="statsBtn" style="color:#00e676;"><i class="fa-solid fa-chart-pie"></i> Estadísticas</button>
         <button class="menu-btn" id="changeBgBtn"><i class="fa-regular fa-image"></i> Fondos</button>
         <button class="menu-btn" id="trashBtn" style="color:#ff6b6b;"><i class="fa-solid fa-trash"></i> Papelera</button>
@@ -236,7 +218,7 @@
   </div>
 
   <button id="menuBtn"><i class="fa-solid fa-bars"></i></button>
-  <button id="quickPoemBtn"><i class="fa-solid fa-feather-pointed"></i></button>
+  <button id="quickPoemBtn"><i class="fa-solid fa-book-bible"></i></button>
 
   <div id="container"></div>
   <input type="text" id="searchBottom" placeholder="Buscar (Ctrl + K)...">
@@ -290,16 +272,22 @@
 
   <div class="modal" id="poemModal">
     <div class="modal-content">
-        <h3><i class="fa-solid fa-feather"></i> Momento Poético</h3>
+        <h3><i class="fa-solid fa-book-bible"></i> Palabra de Dios</h3>
         <div id="poemBody">Cargando...</div>
         <span id="poemAuthor"></span>
         
+        <div id="poemAdminControls" style="display:none; margin-top:15px; display:flex; gap:10px; justify-content:center;">
+             <button id="btnEditCurrentVerse" style="background:#0078d4; border:none; color:white; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:12px;">Editar Este</button>
+             <button id="btnDeleteCurrentVerse" style="background:#d32f2f; border:none; color:white; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:12px;">Eliminar Este</button>
+        </div>
+
         <div id="adminPoemArea" style="display:none; border-top:1px solid #444; margin-top:15px; padding-top:10px;">
             <div style="text-align:left; background:rgba(0,0,0,0.2); padding:10px; border-radius:8px;">
-                <h5 style="margin:0 0 5px 0; color:#00e676;">Panel Admin: Agregar Poema</h5>
-                <textarea id="newPoemContent" rows="3" placeholder="Escribe el poema..." style="font-size:12px;"></textarea>
-                <input type="text" id="newPoemAuthor" placeholder="Autor" style="margin-top:5px; font-size:12px;">
-                <button id="btnSavePoem" style="width:100%; margin-top:5px; background:#00e676; color:black; border:none; padding:5px; border-radius:4px; cursor:pointer;">Publicar Poema</button>
+                <h5 style="margin:0 0 5px 0; color:#00e676;" id="adminVerseTitle">Panel Admin: Agregar Versículo</h5>
+                <textarea id="newPoemContent" rows="3" placeholder="Escribe el versículo..." style="font-size:12px;"></textarea>
+                <input type="text" id="newPoemAuthor" placeholder="Libro / Capítulo / Versículo" style="margin-top:5px; font-size:12px;">
+                <button id="btnSavePoem" style="width:100%; margin-top:5px; background:#00e676; color:black; border:none; padding:5px; border-radius:4px; cursor:pointer;">Publicar Versículo</button>
+                <button id="btnCancelEditVerse" style="width:100%; margin-top:5px; background:#444; color:white; border:none; padding:5px; border-radius:4px; cursor:pointer; display:none;">Cancelar Edición</button>
             </div>
         </div>
 
@@ -361,15 +349,6 @@
     window.contextItem = null;
     window.currentUser = null;
 
-    // --- FRASES ---
-    const quotes = [
-        "El éxito es la suma de pequeños esfuerzos repetidos.",
-        "Hazlo ahora. A veces 'después' se convierte en 'nunca'.",
-        "La disciplina es el puente entre metas y logros.",
-        "Organiza tu mente, organiza tu vida.",
-        "No cuentes los días, haz que los días cuenten."
-    ];
-
     // --- ELEMENTOS DOM ---
     const container = document.getElementById("container");
     const searchBottom = document.getElementById("searchBottom");
@@ -385,11 +364,8 @@
     function init() {
         renderItems();
         updateClock();
-        fetchWeather();
-        checkGreetingDisplay();
         applyBackground();
         setInterval(updateClock, 1000);
-        setInterval(fetchWeather, 600000); // Actualizar clima cada 10 min
         
         // Auto newline en background
         document.getElementById("bgUrlInput").addEventListener('input', function(e) {
@@ -401,95 +377,25 @@
 
         // Atajos de teclado
         document.addEventListener('keydown', handleShortcuts);
-    }
 
-    // --- LOGICA DE SALUDO ---
-    function checkGreetingDisplay() {
-        const now = new Date();
-        const hour = now.getHours();
-        const dateStr = now.toLocaleDateString(); 
-        
-        let period = "Noche";
-        let greet = "Buenas noches";
-        if(hour >= 6 && hour < 12) { period = "Mañana"; greet = "Buenos días"; }
-        else if(hour >= 12 && hour < 20) { period = "Tarde"; greet = "Buenas tardes"; }
+        // --- SOLUCION BUSQUEDA TIEMPO REAL ---
+        // Se agrega el evento input para renderizar mientras se escribe
+        searchBottom.addEventListener('input', () => {
+            renderItems(window.currentFolder);
+        });
 
-        const storageKey = `seen_${dateStr}_${period}`;
-        const hasSeen = localStorage.getItem(storageKey);
-        const container = document.getElementById("greetingContainer");
-
-        if(!hasSeen) {
-            const name = window.currentUser ? window.currentUser.displayName.split(" ")[0] : "Usuario";
-            document.getElementById("greetingBox").textContent = `${greet}, ${name}.`;
-            document.getElementById("quoteBox").textContent = quotes[Math.floor(Math.random() * quotes.length)];
-            
-            container.style.display = "block";
-            setTimeout(() => {
-                container.style.opacity = "0";
-                setTimeout(() => {
-                    container.style.display = "none";
-                    localStorage.setItem(storageKey, "true");
-                }, 1500);
-            }, 4000);
-        } else {
-            container.style.display = "none";
-        }
+        // --- ARREGLO BOTON VACIAR PAPELERA ---
+        document.getElementById("headerEmptyTrashBtn").onclick = () => {
+            if(confirm("¿Estás seguro de vaciar la papelera? Esta acción no se puede deshacer.")) {
+                window.data = window.data.filter(i => i.parent !== 'trash');
+                if(window.saveData) window.saveData();
+                renderItems('trash');
+            }
+        };
     }
 
     function updateClock() {
         document.getElementById("clock").textContent = new Date().toLocaleTimeString();
-    }
-
-    // --- LOGICA CLIMA CONFIGURABLE ---
-    document.getElementById("weatherWidget").onclick = async () => {
-        const city = prompt("Configurar Ubicación:\nIngresa el nombre de tu ciudad (ej: Madrid, Buenos Aires):", window.weatherConfig.city || "");
-        if(city !== null && city.trim() !== "") {
-            document.getElementById("tempText").textContent = "Buscando...";
-            try {
-                // Usar Geocoding API de Open-Meteo
-                const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=es&format=json`);
-                const geoData = await geoRes.json();
-                
-                if(geoData.results && geoData.results.length > 0) {
-                    const place = geoData.results[0];
-                    window.weatherConfig = { city: place.name, lat: place.latitude, lon: place.longitude };
-                    localStorage.setItem("weatherConfig", JSON.stringify(window.weatherConfig));
-                    if(window.saveData) window.saveData(); // Guardar en nube si hay user
-                    fetchWeather();
-                } else {
-                    alert("Ciudad no encontrada.");
-                    document.getElementById("tempText").textContent = "Error";
-                }
-            } catch(e) {
-                console.error(e);
-                alert("Error de conexión al buscar ciudad.");
-            }
-        }
-    };
-
-    async function fetchWeather() {
-        // Prioridad: Configuración manual -> GPS -> Fallback
-        let lat, lon;
-        
-        if (window.weatherConfig.lat && window.weatherConfig.lon) {
-            lat = window.weatherConfig.lat;
-            lon = window.weatherConfig.lon;
-            getWeatherFromApi(lat, lon);
-        } else if(navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(pos => {
-                getWeatherFromApi(pos.coords.latitude, pos.coords.longitude);
-            }, () => { document.getElementById("tempText").textContent = "Clic para config."; });
-        } else {
-            document.getElementById("tempText").textContent = "N/A";
-        }
-    }
-
-    async function getWeatherFromApi(lat, lon) {
-        try {
-            const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
-            const data = await res.json();
-            document.getElementById("tempText").textContent = `${data.current_weather.temperature}°C`;
-        } catch(e) { document.getElementById("tempText").textContent = "Error"; }
     }
 
     // --- LOGICA PRINCIPAL DE RENDERIZADO ---
@@ -497,7 +403,10 @@
         container.innerHTML = "";
         const isTrash = folderId === 'trash';
         
-        headerEmpty.style.display = (isTrash && window.data.some(i=>i.parent==='trash')) ? 'block' : 'none';
+        // Mostrar botón vaciar solo si estamos en papelera y tiene items
+        const trashHasItems = window.data.some(i => i.parent === 'trash');
+        headerEmpty.style.display = (isTrash && trashHasItems) ? 'block' : 'none';
+        
         backBtn.style.display = folderId ? 'block' : 'none';
         
         updateBreadcrumbs();
@@ -673,19 +582,25 @@
     window.applyBackground = function() {
         const conf = window.bgConfig;
         if(!conf || conf.length === 0) return;
+        
+        // --- ARREGLO FONDOS ---
+        // Filtrar URLs vacías o inválidas para evitar parpadeo negro
+        const validConf = conf.filter(u => u && u.trim().length > 5);
+        if(validConf.length === 0) return;
+
         let url;
-        if(conf.length === 1) url = conf[0];
+        if(validConf.length === 1) url = validConf[0];
         else {
             const cur = document.body.style.backgroundImage;
-            do { url = conf[Math.floor(Math.random() * conf.length)]; } while (conf.length > 1 && cur.includes(url));
+            do { url = validConf[Math.floor(Math.random() * validConf.length)]; } while (validConf.length > 1 && cur.includes(url));
         }
-        document.body.style.backgroundImage = `url('${url}')`;
+        document.body.style.backgroundImage = `url("${url.trim()}")`;
     }
 
     window.normalizeText = (t) => t ? t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : "";
     window.getRandomColor = () => { const l="0123456789ABCDEF"; let c="#"; for(let i=0;i<6;i++) c+=l[Math.floor(Math.random()*16)]; return c; };
 
-    // --- CONTEXT MENU (Sin cambios mayores) ---
+    // --- CONTEXT MENU ---
     function showContextMenu(e, item) {
         e.preventDefault(); contextItem = item;
         const isTrash = item.parent === 'trash';
@@ -706,6 +621,12 @@
         if(x+220 > window.innerWidth) x-=220; if(y+350 > window.innerHeight) y-=350;
         contextMenu.style.left=`${x}px`; contextMenu.style.top=`${y}px`;
     }
+
+    // --- ARREGLO ABRIR EN PESTAÑA ---
+    document.getElementById("ctxOpenTab").onclick = () => {
+        window.open(contextItem.link, '_blank');
+        contextMenu.style.display="none";
+    };
 
     document.getElementById("ctxMove").onclick = () => {
         const select = document.getElementById("moveSelect");
@@ -843,7 +764,6 @@
             <strong>En Papelera:</strong> ${trash}<br>
             <hr style="border-color:#555">
             <strong>Usuario:</strong> ${window.currentUser ? window.currentUser.displayName : 'Local'}<br>
-            <strong>Ubicación Clima:</strong> ${window.weatherConfig.city || 'Auto (GPS)'}
         `;
         document.getElementById("statsContent").innerHTML = html;
         document.getElementById("statsModal").style.display = 'flex';
@@ -897,7 +817,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc, collection, addDoc, getDocs, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     // --- CONFIGURACION FIREBASE ---
     const firebaseConfig = {
@@ -932,8 +852,6 @@
             btnLogin.style.display = "none";
             btnLogout.style.display = "flex";
             
-            checkGreetingDisplay();
-
             // --- Lógica de Roles ---
             let isGlobalAdmin = false;
             try {
@@ -951,7 +869,6 @@
                     if(userData.viewMode) window.viewMode = userData.viewMode;
                     if(userData.weatherConfig) {
                         window.weatherConfig = JSON.parse(userData.weatherConfig);
-                        fetchWeather(); // Refrescar clima con datos de nube
                     }
                     window.renderItems(window.currentFolder);
 
@@ -996,8 +913,6 @@
             // Ocultar botón admin
             document.getElementById("poemBtn").style.display = "none";
             
-            checkGreetingDisplay();
-            
             window.saveData = function() {
                 localStorage.setItem("linksData", JSON.stringify(window.data));
                 localStorage.setItem("folderPINs", JSON.stringify(window.folderPINs));
@@ -1008,61 +923,127 @@
         }
     });
 
-    // --- LOGICA DE POEMAS (FIRESTORE PUBLICO) ---
-    // Función común para cargar poema
+    // --- LOGICA DE VERSÍCULOS (CON EDICIÓN ADMIN) ---
+    let currentVerseId = null; // Variable para saber qué versículo se está viendo
+
     async function fetchRandomPoem(isAdminMode) {
         document.getElementById("poemModal").style.display = "flex";
-        document.getElementById("poemBody").textContent = "Buscando inspiración...";
+        document.getElementById("poemBody").textContent = "Buscando palabra...";
         document.getElementById("poemAuthor").textContent = "";
         
-        // Controlar visibilidad del admin area según el modo
-        const adminArea = document.getElementById("adminPoemArea");
-        if(isAdminMode) {
-            adminArea.style.display = "block";
-        } else {
-            adminArea.style.display = "none";
-        }
+        // Reset Admin UI
+        document.getElementById("adminPoemArea").style.display = isAdminMode ? "block" : "none";
+        document.getElementById("poemAdminControls").style.display = "none"; // Se muestra solo si hay versículo y es admin
+        
+        // Reset Form
+        document.getElementById("newPoemContent").value = "";
+        document.getElementById("newPoemAuthor").value = "";
+        document.getElementById("btnSavePoem").textContent = "Publicar Versículo";
+        document.getElementById("adminVerseTitle").textContent = "Panel Admin: Agregar Versículo";
+        document.getElementById("btnCancelEditVerse").style.display = "none";
+        currentVerseId = null;
 
         try {
             const querySnapshot = await getDocs(collection(db, "public_poems"));
             const poems = [];
-            querySnapshot.forEach((doc) => poems.push(doc.data()));
+            querySnapshot.forEach((doc) => {
+                const d = doc.data();
+                d.id = doc.id; // GUARDAR EL ID
+                poems.push(d);
+            });
             
             if(poems.length > 0) {
                 const randomPoem = poems[Math.floor(Math.random() * poems.length)];
                 document.getElementById("poemBody").textContent = randomPoem.content;
                 document.getElementById("poemAuthor").textContent = "- " + randomPoem.author;
+                currentVerseId = randomPoem.id; // Guardamos ID actual
+
+                // Si es admin, mostrar controles para ESTE versículo
+                if(isAdminMode) {
+                    document.getElementById("poemAdminControls").style.display = "flex";
+                }
+
             } else {
-                document.getElementById("poemBody").textContent = "No hay poemas aún.";
+                document.getElementById("poemBody").textContent = "No hay versículos guardados aún.";
             }
         } catch(e) {
-            document.getElementById("poemBody").textContent = "Caminante, no hay camino,\nse hace camino al andar.";
-            document.getElementById("poemAuthor").textContent = "- Antonio Machado";
+            // Fallback Bíblico
+            document.getElementById("poemBody").textContent = "Jehová es mi pastor; nada me faltará.\nEn lugares de delicados pastos me hará descansar;\nJunto a aguas de reposo me pastoreará.";
+            document.getElementById("poemAuthor").textContent = "- Salmos 23:1-2";
         }
     }
 
     // 1. Botón Flotante (PARA TODOS - SOLO LECTURA)
     document.getElementById("quickPoemBtn").onclick = () => {
-        fetchRandomPoem(false); // false = modo solo lectura
+        fetchRandomPoem(false); 
     };
 
     // 2. Botón Menú (SOLO ADMIN - GESTION)
     document.getElementById("poemBtn").onclick = () => {
-        fetchRandomPoem(true); // true = modo admin (mostrar form de agregar)
+        fetchRandomPoem(true); 
     };
 
-    // Agregar Poema (Solo funciona si eres Admin y el área está visible)
+    // --- FUNCIONES ADMIN VERSÍCULOS ---
+    
+    // Botón Eliminar
+    document.getElementById("btnDeleteCurrentVerse").onclick = async () => {
+        if(!currentVerseId) return;
+        if(confirm("¿Eliminar este versículo permanentemente?")) {
+            try {
+                await deleteDoc(doc(db, "public_poems", currentVerseId));
+                alert("Eliminado.");
+                fetchRandomPoem(true); // Recargar otro
+            } catch(e) { alert("Error al eliminar."); }
+        }
+    }
+
+    // Botón Editar (Carga datos en el form)
+    document.getElementById("btnEditCurrentVerse").onclick = () => {
+        if(!currentVerseId) return;
+        const content = document.getElementById("poemBody").textContent;
+        const author = document.getElementById("poemAuthor").textContent.replace("- ", "");
+        
+        document.getElementById("newPoemContent").value = content;
+        document.getElementById("newPoemAuthor").value = author;
+        document.getElementById("btnSavePoem").textContent = "Guardar Cambios";
+        document.getElementById("adminVerseTitle").textContent = "Editando Versículo";
+        document.getElementById("btnCancelEditVerse").style.display = "block";
+        document.getElementById("newPoemContent").focus();
+    }
+
+    document.getElementById("btnCancelEditVerse").onclick = () => {
+        document.getElementById("newPoemContent").value = "";
+        document.getElementById("newPoemAuthor").value = "";
+        document.getElementById("btnSavePoem").textContent = "Publicar Versículo";
+        document.getElementById("adminVerseTitle").textContent = "Panel Admin: Agregar Versículo";
+        document.getElementById("btnCancelEditVerse").style.display = "none";
+    }
+
+    // Guardar (Crear o Actualizar)
     document.getElementById("btnSavePoem").onclick = async () => {
         const content = document.getElementById("newPoemContent").value;
         const author = document.getElementById("newPoemAuthor").value;
+        const isEditing = document.getElementById("btnSavePoem").textContent === "Guardar Cambios";
+
         if(content && author) {
             try {
-                await addDoc(collection(db, "public_poems"), { content, author, date: Date.now() });
-                alert("Poema publicado");
-                document.getElementById("newPoemContent").value = "";
-                document.getElementById("newPoemAuthor").value = "";
-                // Refrescar para ver el nuevo (o uno random)
-                fetchRandomPoem(true);
+                if(isEditing && currentVerseId) {
+                    // ACTUALIZAR
+                    await updateDoc(doc(db, "public_poems", currentVerseId), { content, author });
+                    alert("Versículo actualizado.");
+                    // Actualizar vista actual sin recargar todo
+                    document.getElementById("poemBody").textContent = content;
+                    document.getElementById("poemAuthor").textContent = "- " + author;
+                    // Reset form
+                    document.getElementById("btnCancelEditVerse").click();
+                } else {
+                    // CREAR NUEVO
+                    await addDoc(collection(db, "public_poems"), { content, author, date: Date.now() });
+                    alert("Versículo publicado.");
+                    document.getElementById("newPoemContent").value = "";
+                    document.getElementById("newPoemAuthor").value = "";
+                    fetchRandomPoem(true);
+                }
             } catch(e) { alert("Error: No tienes permisos."); }
         }
     }
