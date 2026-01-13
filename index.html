@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Organizador</title>
+  <script src="https://kit.fontawesome.com/3846a067f2.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <div id="bgImageLayer" class="bg-layer"></div>
+  <div class="bg-layer"><video id="bgVideo" autoplay loop muted playsinline></video></div>
+  <div class="bg-layer"><iframe id="bgYoutubeFrame" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>
+
+  <div class="header-area">
+      <div class="nav-bar">
+          <button id="backBtn" data-tooltip="Volver"><i class="fa-solid fa-arrow-left"></i></button>
+          <div id="breadcrumbs"></div> 
+          <button id="headerEmptyTrashBtn" data-tooltip="Borrar todo"><i class="fa-solid fa-fire"></i> Quemar basura</button>
+      </div>
+  </div>
+
+  <div id="searchContainer"><input type="text" id="searchTop" placeholder="Escribi para buscar..."></div>
+
+  <div id="gamesMenu" class="popup-menu">
+      <button onclick="window.open('https://juegos-pc.github.io/inicio/', '_self')"><i class="fa-solid fa-play"></i> Jugar</button>
+      <button onclick="window.open('https://juegos-pc.github.io/inicio/', '_self')"><i class="fa-solid fa-download"></i> Descargar</button>
+  </div>
+
+  <div id="taskbar">
+      <div class="task-icon" id="btnSearchToggle" data-tooltip="Buscar"><i class="fa-solid fa-magnifying-glass"></i></div>
+      <div class="task-icon" id="btnSettingsToggle" data-tooltip="Configuracion"><i class="fa-solid fa-gear"></i></div>
+      
+      <div class="task-icon" id="btnAddNew" data-tooltip="Agregar" style="color:#00e676;"><i class="fa-solid fa-plus"></i></div>
+      
+      <div class="task-icon" id="btnGames" data-tooltip="Juegos" style="color:#f50057;"><i class="fa-solid fa-gamepad"></i></div>
+      <div class="task-icon" id="trashBtn" data-tooltip="Basura" style="color:#ff6b6b;"><i class="fa-regular fa-trash-can"></i></div>
+      <div class="task-sep"></div>
+      <div id="pinnedContainer" style="display:flex; gap:10px;"></div>
+      <div class="task-sep"></div>
+      <div class="task-icon" id="viewVersesBtn" data-tooltip="Ver Versiculo" style="color:#e040fb;"><i class="fa-solid fa-book-bible"></i></div>
+      <div class="task-icon" id="poemBtn" data-tooltip="Admin Versiculos" style="display:none; color:#00e676;"><i class="fa-solid fa-user-tie"></i></div>
+  </div>
+
+  <div id="newItemMenu" class="popup-menu">
+      <button id="menuNewFolder"><i class="fa-solid fa-folder" style="color:#FFD700"></i> Carpeta</button>
+      <button id="menuNewLink"><i class="fa-solid fa-link" style="color:#00aaff"></i> Enlace</button>
+      <button id="menuNewNote"><i class="fa-solid fa-file-lines" style="color:#4caf50"></i> Nota</button>
+  </div>
+
+  <div id="container"></div>
+
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <h3 id="modalTitle">Agregar</h3>
+      <label>Titulo:</label><input type="text" id="itemTitle" class="enter-save">
+      <div id="linkFields" style="display:none;"><label>URL:</label><input type="url" id="itemLink" class="enter-save"></div>
+      <div id="colorFields" style="display:none;"><label>Color:</label><input type="color" id="itemColor" style="height:40px;"></div>
+      <div id="folderPINField" style="display:none;"><label>PIN (Opcional):</label><input type="text" id="itemPIN" class="enter-save"></div>
+      <div class="modal-btn-group"><button id="saveItem" style="background:#0078d4;color:white;">Dale</button><button id="cancelItem" style="background:#333;">Deja</button></div>
+    </div>
+  </div>
+
+  <div class="modal" id="noteEditorModal">
+    <div class="modal-content large">
+        <div class="editor-header">
+            <h3 id="noteEditorTitle" style="margin:0; font-size:16px;">Nota</h3>
+            <div style="flex:1;"></div>
+            <button id="modeToggle" style="padding:6px 15px; background:#0078d4; border:none; border-radius:4px; color:white; cursor:pointer;">Editar</button>
+            <button id="closeEditorBtn" style="padding:6px 15px; background:#d32f2f; border:none; border-radius:4px; color:white; cursor:pointer;">Cerrar</button>
+        </div>
+        <div class="editor-toolbar" id="editToolbar" style="display:none;">
+            <button class="tool-btn" onmousedown="event.preventDefault(); document.execCommand('bold');" title="Negrita"><b>B</b></button>
+            <button class="tool-btn" onmousedown="event.preventDefault(); document.execCommand('italic');" title="Cursiva"><i>I</i></button>
+            <button class="tool-btn" onmousedown="event.preventDefault(); document.execCommand('underline');" title="Subrayado"><u>U</u></button>
+            <button class="tool-btn" id="addLinkNoteBtn" onmousedown="event.preventDefault();" title="Insertar Enlace"><i class="fa-solid fa-link"></i></button>
+            <div style="width:1px; height:20px; background:#444; margin:0 5px;"></div>
+            <input type="text" id="searchNoteInput" placeholder="Buscar..." style="padding:4px; font-size:12px; width:120px; border-radius:4px; border:1px solid #444; background:#222; color:white;">
+        </div>
+        <div id="editor" contenteditable="false"></div>
+    </div>
+  </div>
+
+  <div class="modal" id="noteLinkModal">
+      <div class="modal-content">
+          <h3>Poner Enlace</h3>
+          <input type="text" id="noteLinkText" placeholder="Texto que se ve">
+          <input type="text" id="noteLinkUrl" placeholder="https://...">
+          <div class="modal-btn-group">
+              <button id="confirmNoteLink" style="background:#0078d4;">Poner</button>
+              <button onclick="document.getElementById('noteLinkModal').style.display='none'" style="background:#333;">Cancelar</button>
+          </div>
+      </div>
+  </div>
+
+  <div class="modal" id="settingsModal">
+      <div id="settingsModalContent">
+          <div class="settings-sidebar">
+              <h4 style="margin:10px; color:#666; font-size:12px;">CONFIGURACION</h4>
+              <button class="settings-btn active" onclick="switchTab('profile')"><i class="fa-solid fa-user"></i> Perfil</button>
+              <button class="settings-btn" onclick="switchTab('view')"><i class="fa-solid fa-eye"></i> Vista</button>
+              <button class="settings-btn" onclick="switchTab('personalize')"><i class="fa-solid fa-pen"></i> Personalizar</button>
+              <button class="settings-btn" id="btnHelpInfo" style="color:#00e676;"><i class="fa-solid fa-circle-info"></i> Info / Atajos</button>
+              <button class="settings-btn" onclick="document.getElementById('settingsModal').style.display='none'" style="margin-top:auto; color:#ff6b6b;"><i class="fa-solid fa-xmark"></i> Cerrar</button>
+          </div>
+          <div class="settings-body">
+              <div id="tab-profile" class="settings-page active">
+                  <h3>Mi Perfil</h3>
+                  <div style="display:flex; align-items:center; gap:15px; margin-bottom:20px; background:rgba(255,255,255,0.05); padding:15px; border-radius:10px;">
+                      <img id="userAvatar" src="" style="width:50px; height:50px; border-radius:50%; background:#333;" alt="">
+                      <div><h4 id="userName" style="margin:0;">Invitado</h4><span id="userStatus" style="font-size:12px; color:#888;">Local</span></div>
+                  </div>
+                  <button id="btnLogin" style="width:100%; padding:10px; background:#4285F4; color:white; border:none; border-radius:6px; cursor:pointer;">Iniciar Google</button>
+                  <button id="btnLogout" style="width:100%; padding:10px; background:#333; color:#ff6b6b; border:none; border-radius:6px; cursor:pointer; display:none;">Cerrar Sesion</button>
+                  <hr style="border-color:#333; margin:20px 0;">
+                  <button id="btnExport" style="background:none; border:1px solid #555; color:#ddd; padding:5px;">Exportar</button>
+                  <button id="btnImport" onclick="document.getElementById('fileInput').click()" style="background:none; border:1px solid #555; color:#ddd; padding:5px;">Importar</button>
+                  <input type="file" id="fileInput" style="display:none" accept=".json">
+              </div>
+              <div id="tab-view" class="settings-page">
+                  <h3>Vista</h3>
+                  <button id="btnToggleTheme" style="width:100%; padding:10px; background:#333; color:white; border:none; border-radius:6px; margin-bottom:10px;">Modo Oscuro/Claro</button>
+                  
+                  <label>Ordenar por:</label>
+                  <div style="display:flex; gap:10px; margin-top:5px;">
+                      <button id="btnSortAlpha" style="flex:1; padding:8px; background:#252525; color:white; border:1px solid #444;">A-Z</button>
+                      <button id="btnSortUsage" style="flex:1; padding:8px; background:#252525; color:white; border:1px solid #444;">Uso</button>
+                      <button id="btnSortManual" style="flex:1; padding:8px; background:#252525; color:white; border:1px solid #444;">Manual</button>
+                  </div>
+              </div>
+              <div id="tab-personalize" class="settings-page">
+                  <h3>Fondo</h3>
+                  <label>URL (Pone varias separadas por coma para aleatorio):</label>
+                  <textarea id="bgInput" placeholder="https://imagen1.jpg, https://video.mp4, ..." style="width:96%; height:60px; padding:10px; margin-bottom:10px; background:#111; color:#fff; border:1px solid #444; resize:none;"></textarea>
+                  <button id="btnSaveBg" style="width:100%; padding:10px; background:#00aaff; color:white; border:none; border-radius:6px;">Guardar Fondo</button>
+                  <div id="bgStatus" style="margin-top:10px; font-style:italic; color:#00e676;"></div>
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <div id="helpOverlay">
+      <div class="help-content">
+          <button id="closeHelpBtn"><i class="fa-solid fa-xmark"></i> Cerrar</button>
+          <h1>Guia del Sistema</h1>
+          <div class="help-grid">
+              <div class="help-section">
+                  <h2><i class="fa-solid fa-computer-mouse"></i> Ratón</h2>
+                  <ul>
+                      <li><b>Click Izquierdo:</b> Abrir carpeta / Abrir enlace (misma pestaña).</li>
+                      <li><b>Click Derecho (Fondo):</b> Menu para crear Carpeta, Nota o Enlace.</li>
+                      <li><b>Click Derecho (Item):</b> Menu de opciones (Editar, Borrar, Fijar, Abrir en otra pestaña).</li>
+                      <li><b>Arrastrar:</b> Mover cosas de lugar (si no estás ordenando automático).</li>
+                      <li><b>Shift + Soltar sobre carpeta:</b> Mover adentro de la carpeta.</li>
+                  </ul>
+              </div>
+              <div class="help-section">
+                  <h2><i class="fa-solid fa-keyboard"></i> Teclado</h2>
+                  <ul>
+                      <li><b>Ctrl + K:</b> Abrir/Cerrar barra de búsqueda.</li>
+                      <li><b>Ctrl + G (en nota):</b> Guardar nota.</li>
+                      <li><b>Escape:</b> Cerrar ventanas / modales.</li>
+                  </ul>
+              </div>
+              <div class="help-section">
+                  <h2><i class="fa-solid fa-folder-tree"></i> Organización</h2>
+                  <ul>
+                      <li><b>Carpetas:</b> Podes ponerles PIN para privacidad.</li>
+                      <li><b>Notas:</b> Editor simple. Soporta búsqueda interna.</li>
+                      <li><b>Basura:</b> Todo lo borrado va ahí. "Quemar basura" lo elimina para siempre.</li>
+                  </ul>
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <div class="modal" id="ytModal">
+    <div style="position:relative; width:80%; max-width:900px;">
+        <div id="closeYt" onclick="document.getElementById('ytModal').style.display='none'" style="position:absolute; top:-30px; right:0; color:white; font-size:24px; cursor:pointer;">&times;</div>
+        <div class="modal-content"><iframe id="ytFrame" src="" allowfullscreen></iframe></div>
+    </div>
+  </div>
+
+  <div class="modal" id="poemModal">
+    <div class="modal-content">
+        <h3><i class="fa-solid fa-book-bible"></i> Palabra de Dios</h3>
+        <div id="poemBody">Cargando...</div><span id="poemAuthor"></span>
+        <div id="poemAdminControls" style="display:none; margin-top:15px; justify-content:center; gap:10px;">
+             <button id="btnEditCurrentVerse" style="background:#0078d4; color:white; border:none;">Editar</button>
+             <button id="btnDeleteCurrentVerse" style="background:#d32f2f; color:white; border:none;">Eliminar</button>
+        </div>
+        <div id="adminPoemArea" style="display:none; margin-top:15px;">
+            <textarea id="newPoemContent" rows="3" placeholder="Versiculo..." style="width:100%;"></textarea>
+            <input type="text" id="newPoemAuthor" placeholder="Autor..." style="width:100%; margin-top:5px;">
+            <button id="btnSavePoem" style="width:100%; margin-top:5px; background:#00e676; border:none; padding:5px;">Publicar</button>
+            <button id="btnCancelEditVerse" style="width:100%; margin-top:5px; background:#444; border:none; padding:5px; display:none;">Cancelar</button>
+        </div>
+        <button onclick="document.getElementById('poemModal').style.display='none'" style="background:#333; color:white; border:none; padding:10px; width:100%; border-radius:8px; margin-top:10px;">Cerrar</button>
+    </div>
+  </div>
+  
+  <input type="color" id="ctxColorInput" style="display:none;">
+
+  <div id="contextMenu">
+    <div id="ctxItemActions" style="display:none;">
+        <button id="ctxOpenTab" style="display:none;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir en nueva pestaña</button>
+        <button id="ctxPin"><i class="fa-solid fa-thumbtack"></i> Fijar en barra</button>
+        <button id="ctxUnpin" style="display:none;"><i class="fa-solid fa-thumbtack-slash"></i> Desanclar</button>
+        <div class="separator"></div>
+        <button id="ctxCopyItem"><i class="fa-regular fa-copy"></i> Copiar</button>
+        <button id="ctxCutItem"><i class="fa-solid fa-scissors"></i> Cortar</button>
+        <button id="ctxCopyLink" style="display:none;"><i class="fa-regular fa-copy"></i> Copiar URL</button>
+        <button id="ctxColor" style="display:none;"><i class="fa-solid fa-palette"></i> Cambiar Color</button>
+        <button id="ctxEdit"><i class="fa-solid fa-pen"></i> Editar</button>
+        <div class="separator"></div>
+        <button id="ctxDelete" style="color:#ff6b6b;"><i class="fa-solid fa-trash"></i> A la basura</button>
+        <button id="ctxRestore" style="display:none; color:#4caf50;"><i class="fa-solid fa-trash-arrow-up"></i> Restaurar</button>
+        <button id="ctxPermDelete" style="display:none; color:#ff4444;"><i class="fa-solid fa-ban"></i> Eliminar posta</button>
+    </div>
+    <div id="ctxGlobalActions" style="display:none;">
+        <button id="ctxNewFolder"><i class="fa-solid fa-folder" style="color:#FFD700"></i> Nueva Carpeta</button>
+        <button id="ctxNewNote"><i class="fa-solid fa-file-lines" style="color:#4caf50"></i> Nueva Nota</button>
+        <button id="ctxNewLink"><i class="fa-solid fa-link" style="color:#00aaff"></i> Nuevo Enlace</button>
+        <div class="separator"></div>
+        <button id="ctxPaste" style="display:none;"><i class="fa-regular fa-paste"></i> Pegar</button>
+    </div>
+  </div>
+
+  <script type="module" src="script.js"></script>
+
+</body>
+</html>
