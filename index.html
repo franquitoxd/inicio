@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Organizador</title>
+  <title>organizador</title>
   <script src="https://kit.fontawesome.com/3846a067f2.js" crossorigin="anonymous"></script>
   <link rel="icon" href="organizador.png">
   <link rel="icon" href="organizador.ico">
@@ -61,7 +61,7 @@
       <div id="linkFields" style="display:none;"><label>URL:</label><input type="url" id="itemLink" class="enter-save"></div>
       <div id="colorFields" style="display:none;"><label>Color:</label><input type="color" id="itemColor" style="height:40px;"></div>
       <div id="folderPINField" style="display:none;"><label>PIN (Opcional):</label><input type="text" id="itemPIN" class="enter-save"></div>
-      <div class="modal-btn-group"><button id="saveItem" style="background:#0078d4;color:white;">Dale</button><button id="cancelItem" style="background:#333;">Deja</button></div>
+      <div class="modal-btn-group"><button id="saveItem" style="background:#0078d4;color:white;">aceptar</button><button id="cancelItem" style="background:#333;">cancelar</button></div>
     </div>
   </div>
 
@@ -71,7 +71,7 @@
             <h3 id="noteEditorTitle" style="margin:0; font-size:16px;">Nota</h3>
             <div style="flex:1;"></div>
             <button id="modeToggle" style="padding:6px 15px; background:#0078d4; border:none; border-radius:4px; color:white; cursor:pointer;">Editar</button>
-            <button id="closeEditorBtn" style="padding:6px 15px; background:#d32f2f; border:none; border-radius:4px; color:white; cursor:pointer;">Cerrar</button>
+            <button id="closeEditorBtn" style="padding:6px 15px; background:#d32f2f; border:none; border-radius:4px; color:white; cursor:pointer;">Cerrar(salir)</button>
         </div>
         <div class="editor-toolbar" id="editToolbar" style="display:none;">
             <button class="tool-btn" onmousedown="event.preventDefault(); document.execCommand('bold');" title="Negrita"><b>B</b></button>
@@ -88,8 +88,8 @@
   <div class="modal" id="noteLinkModal">
       <div class="modal-content">
           <h3>Poner Enlace</h3>
-          <input type="text" id="noteLinkText" placeholder="Texto que se ve">
-          <input type="text" id="noteLinkUrl" placeholder="https://...">
+          <input type="text" id="noteLinkText" placeholder="Nombre">
+          <input type="text" id="noteLinkUrl" placeholder="enlace(link)">
           <div class="modal-btn-group">
               <button id="confirmNoteLink" style="background:#0078d4;">Poner</button>
               <button onclick="document.getElementById('noteLinkModal').style.display='none'" style="background:#333;">Cancelar</button>

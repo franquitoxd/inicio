@@ -2,7 +2,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, collection, addDoc, getDocs, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// --- CONFIGURACION FIREBASE ---
 const firebaseConfig = {
     apiKey: "AIzaSyBuEYx4pTsnhRJE37mVX38jgBIi5GyZ4fQ",
     authDomain: "organizador-a8fa1.firebaseapp.com",
@@ -17,7 +16,6 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
-// --- VARIABLES Y ESTADO ---
 window.data = JSON.parse(localStorage.getItem("linksData")) || [];
 window.folderPINs = JSON.parse(localStorage.getItem("folderPINs")) || {};
 window.pinnedIds = JSON.parse(localStorage.getItem("pinnedIds")) || [];
@@ -33,23 +31,19 @@ window.contextItem = null;
 window.currentUser = null;
 window.savedRange = null;
 
-// DOM ELEMENTS
 const container = document.getElementById("container");
 const backBtn = document.getElementById("backBtn");
 const breadcrumbsDiv = document.getElementById("breadcrumbs");
 const searchTop = document.getElementById("searchTop");
 const contextMenu = document.getElementById("contextMenu");
 
-// Background Elements
 const bgImageLayer = document.getElementById("bgImageLayer");
 const bgVideo = document.getElementById("bgVideo");
 const bgYoutubeFrame = document.getElementById("bgYoutubeFrame");
 
-// --- INICIO ---
 function init() {
     if(window.isLightMode) document.body.classList.add('light-mode');
     
-    // Logica random del fondo
     pickRandomBackground(window.bgImage);
     
     window.history.replaceState({folderId: null}, "", ""); 
@@ -61,16 +55,12 @@ function init() {
     
     searchTop.addEventListener('input', () => { renderItems(window.currentFolder); });
     
-    // PEGAR COMO TEXTO PLANO
     document.getElementById("editor").addEventListener('paste', (e) => {
         e.preventDefault();
         const text = (e.clipboardData || window.clipboardData).getData('text');
         document.execCommand('insertText', false, text);
     });
 
-    // --- MANEJO DE CLICKS ---
-
-    // 1. Click Izquierdo: Cierra todo menú abierto
     document.addEventListener('click', (e) => {
         if(e.target.closest('#modal') || e.target.closest('#noteEditorModal')) return; 
 
@@ -81,7 +71,6 @@ function init() {
         if(!e.target.closest('#gamesMenu') && !e.target.closest('#btnGames')) document.getElementById("gamesMenu").style.display = "none";
     });
 
-    // 2. Click Derecho (GLOBAL)
     document.addEventListener('contextmenu', (e) => {
         if(e.target.closest('#editor') || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return; 
         
@@ -113,15 +102,10 @@ function init() {
     };
 }
 
-// --- FUNCION PARA MEZCLAR DATOS (IMPORTAR O LOGIN) ---
 function combinarDatos(existentes, nuevos) {
-    // Creamos un mapa con lo existente para busqueda rapida por ID
     const mapa = new Map(existentes.map(i => [i.id, i]));
     
-    // Recorremos los nuevos
     nuevos.forEach(item => {
-        // Si no existe el ID, lo agregamos. 
-        // Si ya existe, NO lo sobreescribimos (priorizamos lo que ya estaba cargado o la nube segun el caso)
         if (!mapa.has(item.id)) {
             mapa.set(item.id, item);
         }
@@ -131,7 +115,6 @@ function combinarDatos(existentes, nuevos) {
     return Array.from(mapa.values());
 }
 
-// --- FONDO (RANDOMIZADO) ---
 function pickRandomBackground(bgString) {
     if(!bgString) return;
     const list = bgString.split(',').map(s => s.trim()).filter(s => s);
@@ -166,7 +149,6 @@ function updateBackground(url) {
     }
 }
 
-// --- RENDERIZADO ---
 window.renderItems = function(folderId = null) {
     container.innerHTML = "";
     const isTrash = folderId === 'trash';
@@ -187,10 +169,10 @@ window.renderItems = function(folderId = null) {
 
     const search = window.normalizeText(searchTop.value);
     if (search && !isTrash) {
-        items = window.data.filter(i => i.parent!=='trash' && (window.normalizeText(i.title).includes(search) || (i.type==='link' && window.normalizeText(i.link).includes(search))));
-        breadcrumbsDiv.innerHTML = `<span class="crumb">Buscando...</span>`;
-        backBtn.style.display="none"; 
-    }
+    items = window.data.filter(i => i.parent!=='trash' && window.normalizeText(i.title).includes(search));
+    breadcrumbsDiv.innerHTML = `<span class="crumb">Buscando...</span>`;
+    backBtn.style.display="none"; 
+}
     if (items.length === 0) container.innerHTML = `<div style="width:100%;text-align:center;color:#666;font-size:18px;">${isTrash?'Basura vacia':'Vacio aca'}</div>`;
     items.forEach(item => createItemElement(item, isTrash, search));
 }
@@ -282,7 +264,6 @@ function handleDrop(e, targetItem) {
     if(window.saveData) window.saveData(); renderItems(window.currentFolder);
 }
 
-// --- PINS & BARRA ---
 window.renderPinned = function() {
     document.getElementById("pinnedContainer").innerHTML = "";
     window.pinnedIds.forEach(pid => {
@@ -302,7 +283,6 @@ window.renderPinned = function() {
     });
 }
 
-// --- INTERFAZ ---
 document.getElementById("btnSearchToggle").onclick = () => {
     const c = document.getElementById("searchContainer");
     if(c.style.width === "60%") c.style.width = "0"; else { c.style.width = "60%"; searchTop.focus(); }
@@ -312,19 +292,16 @@ document.getElementById("trashBtn").onclick = () => { window.currentFolder='tras
 document.getElementById("btnAddNew").onclick = () => {
     const m = document.getElementById("newItemMenu"); m.style.display = (m.style.display === "flex") ? "none" : "flex";
 };
-// Botones del menu central
+
 document.getElementById("menuNewFolder").onclick = () => { openModal(null, 'folder'); document.getElementById("newItemMenu").style.display="none"; };
 document.getElementById("menuNewLink").onclick = () => { openModal(null, 'link'); document.getElementById("newItemMenu").style.display="none"; };
 document.getElementById("menuNewNote").onclick = () => { openModal(null, 'note'); document.getElementById("newItemMenu").style.display="none"; };
 document.getElementById("btnGames").onclick = () => { const m = document.getElementById("gamesMenu"); m.style.display = (m.style.display === "flex") ? "none" : "flex"; };
 
-// BOTONES DEL CLICK DERECHO
 document.getElementById("ctxNewFolder").onclick = () => { openModal(null, 'folder'); contextMenu.style.display = "none"; };
 document.getElementById("ctxNewNote").onclick = () => { openModal(null, 'note'); contextMenu.style.display = "none"; };
 document.getElementById("ctxNewLink").onclick = () => { openModal(null, 'link'); contextMenu.style.display = "none"; };
 
-
-// --- NAVEGACION ---
 window.enterFolder = function(item) {
     if(window.folderPINs[item.id] && prompt("PIN:")!==window.folderPINs[item.id]) return;
     searchTop.value = ""; window.currentFolder=item.id; 
@@ -362,7 +339,6 @@ function openLink(url) {
     }
 }
 
-// --- MODAL CREAR ---
 document.getElementById("saveItem").onclick = saveModalItem;
 document.getElementById("cancelItem").onclick = () => document.getElementById("modal").style.display="none";
 
@@ -448,7 +424,6 @@ function saveModalItem() {
     }
 }
 
-// --- NOTAS ---
 const editor = document.getElementById("editor"); let isEditing = false; let currentNoteId = null;
 window.openNoteEditor = function(id) {
     currentNoteId = id; const n = window.data.find(x=>x.id===id); if(!n) return;
@@ -516,7 +491,6 @@ document.getElementById("searchNoteInput").addEventListener('input', function() 
 
 document.getElementById("closeEditorBtn").onclick = () => { if(isEditing) saveNote(); document.getElementById("noteEditorModal").style.display='none'; };
 
-// --- UTILS & SHORTCUTS ---
 window.switchTab = (tabId) => {
     document.querySelectorAll('.settings-page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.settings-btn').forEach(b => b.classList.remove('active'));
@@ -533,8 +507,6 @@ document.getElementById("btnSortAlpha").onclick = () => { window.sortMode='alpha
 document.getElementById("btnSortUsage").onclick = () => { window.sortMode='usage'; localStorage.setItem("sortMode", 'usage'); renderItems(window.currentFolder); };
 document.getElementById("btnSortManual").onclick = () => { window.sortMode='manual'; localStorage.setItem("sortMode", 'manual'); renderItems(window.currentFolder); };
 
-
-// HELP SCREEN
 document.getElementById("btnHelpInfo").onclick = () => {
     document.getElementById("helpOverlay").style.display = "flex";
 };
@@ -542,7 +514,6 @@ document.getElementById("closeHelpBtn").onclick = () => {
     document.getElementById("helpOverlay").style.display = "none";
 };
 
-// FONDO
 document.getElementById("btnSaveBg").onclick = () => {
     const url = document.getElementById("bgInput").value;
     const status = document.getElementById("bgStatus");
@@ -599,7 +570,6 @@ function handleShortcuts(e) {
 window.normalizeText = (t) => t ? t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : "";
 window.getRandomColor = () => { const l="0123456789ABCDEF"; let c="#"; for(let i=0;i<6;i++) c+=l[Math.floor(Math.random()*16)]; return c; };
 
-// CONTEXT ACTIONS
 document.getElementById("ctxCopyItem").onclick = () => { window.clipboard = { item: JSON.parse(JSON.stringify(contextItem)), type: 'copy' }; };
 document.getElementById("ctxCutItem").onclick = () => { window.clipboard = { item: contextItem, type: 'cut' }; };
 document.getElementById("ctxPaste").onclick = () => {
@@ -630,7 +600,6 @@ document.getElementById("ctxPermDelete").onclick = () => {
     } 
 };
 
-// --- AUTH FIREBASE ---
 const btnLogin = document.getElementById("btnLogin");
 const btnLogout = document.getElementById("btnLogout");
 const userAvatar = document.getElementById("userAvatar");
@@ -654,16 +623,14 @@ onAuthStateChanged(auth, async (user) => {
             const userRef = doc(db, "users", user.uid);
             const userSnap = await getDoc(userRef);
             
-            // ACA ESTA LA MAGIA DE MEZCLAR DATOS AL INICIAR
             let cloudData = [];
-            let localData = window.data; // Lo que ya cargo del localStorage al inicio
+            let localData = window.data;
             
             if (userSnap.exists()) {
                 const userData = userSnap.data();
                 if (userData.role === 'admin') isGlobalAdmin = true;
                 if(userData.linksData) cloudData = JSON.parse(userData.linksData);
                 
-                // MEZCLAMOS: Nube + Local
                 window.data = combinarDatos(cloudData, localData);
                 
                 if(userData.folderPINs) window.folderPINs = {...window.folderPINs, ...JSON.parse(userData.folderPINs)};
@@ -671,11 +638,9 @@ onAuthStateChanged(auth, async (user) => {
                 if(userData.bgImage && !window.bgImage) { window.bgImage = userData.bgImage; }
                 
             } else { 
-                // Si es usuario nuevo en nube, subimos lo local
                 await setDoc(userRef, { role: 'user', linksData: JSON.stringify(localData) }, { merge: true }); 
             }
             
-            // Renderizamos con la mezcla
             if(window.bgImage) { document.getElementById("bgInput").value = window.bgImage; pickRandomBackground(window.bgImage); }
             renderItems(window.currentFolder);
             renderPinned();
@@ -699,7 +664,6 @@ onAuthStateChanged(auth, async (user) => {
             } catch (e) { console.error(e); }
         };
         
-        // Guardamos la mezcla inicial para asegurar que la nube tenga todo
         window.saveData();
 
     } else {
@@ -710,7 +674,6 @@ onAuthStateChanged(auth, async (user) => {
         btnLogin.style.display = "block";
         btnLogout.style.display = "none";
         
-        // Si no hay user, cargamos de localstorage y listo
         window.data = JSON.parse(localStorage.getItem("linksData")) || [];
         renderItems(window.currentFolder);
         renderPinned();
@@ -724,7 +687,6 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// VERSICULOS LOGICA (SOLO MANUAL AHORA)
 let currentVerseId = null;
 
 async function fetchRandomPoem(isAdminMode) {
@@ -770,6 +732,4 @@ document.getElementById("btnSavePoem").onclick = async () => {
         else { await addDoc(collection(db, "public_poems"), { content, author, date: Date.now() }); fetchRandomPoem(true); }
     }
 }
-
-// Inicializar
 init();
