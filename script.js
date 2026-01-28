@@ -631,10 +631,12 @@ onAuthStateChanged(auth, async (user) => {
                 if (userData.role === 'admin') isGlobalAdmin = true;
                 if(userData.linksData) cloudData = JSON.parse(userData.linksData);
                 
-                window.data = combinarDatos(cloudData, localData);
+                // CAMBIO: Usamos directo la nube, ignorando lo viejo que haya en esta PC
+                window.data = cloudData; 
                 
-                if(userData.folderPINs) window.folderPINs = {...window.folderPINs, ...JSON.parse(userData.folderPINs)};
-                if(userData.pinnedIds) window.pinnedIds = [...new Set([...window.pinnedIds, ...JSON.parse(userData.pinnedIds)])];
+                // Lo mismo para los PINs y los anclados, que no mezcle, que reemplace
+                if(userData.folderPINs) window.folderPINs = JSON.parse(userData.folderPINs);
+                if(userData.pinnedIds) window.pinnedIds = JSON.parse(userData.pinnedIds);
                 if(userData.bgImage && !window.bgImage) { window.bgImage = userData.bgImage; }
                 
             } else { 
@@ -732,4 +734,5 @@ document.getElementById("btnSavePoem").onclick = async () => {
         else { await addDoc(collection(db, "public_poems"), { content, author, date: Date.now() }); fetchRandomPoem(true); }
     }
 }
+
 init();
